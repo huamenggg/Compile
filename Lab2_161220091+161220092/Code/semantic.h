@@ -1,6 +1,7 @@
 #include "stdio.h"
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
+typedef struct SymbolList_* SymbolList;
 
 struct Type_
 {
@@ -22,6 +23,16 @@ struct FieldList_
 	Type type;
 	FieldList tail;
 };
+
+struct SymbolList_
+{
+	char* name;
+	Type type;
+	SymbolList next;
+};
+
+Type typeList[100];
+SymbolList symbolList[300];
 
 int IsId(char ch);
 char* Filter(char* string);

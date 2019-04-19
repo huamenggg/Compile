@@ -1,4 +1,6 @@
 #include"semantic.h"
+#include"string.h"
+
 int IsId(char ch) {
 	if(ch == '_') return 1;
 	if(ch >= '0' && ch <= '9') return 1;
@@ -13,4 +15,3 @@ char* Filter(char* string) {
 	string[i] = '\0';
 	return string;
 }
-
