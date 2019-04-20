@@ -61,8 +61,16 @@ ExtDef	: Specifier ExtDecList SEMI
         {
 		FieldList f = $2;
 		while(f != NULL) {
-			/* TODO:handle array situation */
-			f->type = $1;
+			if(f->type == NULL) {
+				f->type = $1;
+			}
+			else {
+				Type t = f->type;
+				while(t->u.array.elem != NULL) {
+					t = t->u.array.elem;
+				}
+				t->u.array.elem = $1;
+			}
 			insertSymbol(f);
 			f = f->next;
 		}
@@ -157,8 +165,16 @@ VarDec	: ID
 	}
         | VarDec LB INT RB
 	{
-		/* TODO handle array */
-		//$$ = generateField($1, 
+		Type t = generateTypeArray($3);
+		Type t2 = $1->type;
+		if(t2 == NULL)
+			$1->type = t;
+		else {
+			while(t2->u.array.elem != NULL)
+				t2 = t2->u.array.elem;
+			t2->u.array.elem = t;
+		}
+		$$ = $1;
 	}
 	/*| error RB
 	{
@@ -257,12 +273,19 @@ Def	: Specifier DecList SEMI
 	{
 		/* int a, b = 1, c[2]; */
 		/* $2 is a FieldList named a, next is b, and b->next is c */
-		FieldList temp = $2;
-		while(temp != NULL) {
-			/*TODO array need to implement differently */
-			temp->type = $1;
-			insertSymbol(temp);
-			temp = temp->next;
+		FieldList f = $2;
+		while(f != NULL) {
+			if(f->type == NULL) {
+				f->type = $1;
+			}
+			else {
+				Type t = f->type;
+				while(t->u.array.elem != NULL)
+					t = t->u.array.elem;
+				t->u.array.elem = $1;
+			}
+			insertSymbol(f);
+			f = f->next;
 		}
 		$$ = $2;
 	}

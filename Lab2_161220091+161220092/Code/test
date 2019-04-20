@@ -1,5 +1,6 @@
 struct test2 {
 	int a;
+	float a3[10], b5[10][8];
 } kind;
 struct test {
 	int b, d, efs;

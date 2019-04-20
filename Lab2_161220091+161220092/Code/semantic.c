@@ -80,6 +80,14 @@ Type generateType(char* name, FieldList head) {
 	return t;
 }
 
+Type generateTypeArray(int size) {
+	Type t = (Type)malloc(sizeof(struct Type_));
+	t->kind = ARRAY;
+	t->u.array.size = size;
+	t->u.array.elem = NULL;
+	return t;
+}
+
 FieldList generateField(char* name, Type type) {
 	FieldList f = (FieldList)malloc(sizeof(struct FieldList_));
 	strcpy(f->name, name);

@@ -30,12 +30,20 @@ void testResult() {
 			FieldList f = symbolList[i];
 			int j = 1;
 			while(f != NULL){
-			printf("[%d:%d]name:%s", i, j, f->name);
-			if(f->type->kind != BASIC)
-				printf("\ttype:%s", f->type->name);
-			printf("\n");
-			f = f->next;
-			j++;
+				printf("[%d:%d]name:%s", i, j, f->name);
+				if(f->type->kind == STRUCTURE)
+					printf("\ttype:%s", f->type->name);
+				else if(f->type->kind == ARRAY) {
+					Type t1 = f->type;
+					while(t1->kind == ARRAY) {
+						printf("\t%d", t1->u.array.size);
+						t1 = t1->u.array.elem;
+					}
+					printf("\ttype:%d", t1->kind);
+				}
+				printf("\n");
+				f = f->next;
+				j++;
 			}
 		}
 	}

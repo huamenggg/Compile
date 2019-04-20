@@ -57,6 +57,7 @@ FieldList getSymbol(char* name);
 Type getTypeAddress(char* typeName);
 Type insertType(Type type);
 Type generateType(char* name, FieldList head);
+Type generateTypeArray(int size);
 
 FieldList generateField(char* name, Type type);
 #endif
