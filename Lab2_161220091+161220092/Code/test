@@ -1,4 +1,15 @@
-int _2342i_234____iii_i;
-int main(){
-	int a[1] = 1;
+struct test2 {
+	int a;
+} kind;
+struct test {
+	int b, d, efs;
+	float temp, test;
+	struct test2 c, sdfsd, sdf_23423;
+} of;
+
+int main() {
+	int mh;
+	float hm;
+	struct test a2;
+	struct test2 a333;
 }

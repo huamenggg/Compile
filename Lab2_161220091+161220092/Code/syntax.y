@@ -1,4 +1,5 @@
 //#include "lex.yy.c"
+%define api.value.type {struct YYSTYPE}
 %locations
 %{
  #include "lex.yy.c"
@@ -11,13 +12,6 @@
  #define NONE "\033[m"
 %}
 
- /* declared types */
-%union {
- int type_int;
- float type_float;
- char* type_char;
-}
-
  /* declared tokens */
 %token <type_int>INT
 %token <type_float> FLOAT
@@ -26,14 +20,18 @@
 %token <type_char> DOT NOT LP RP LB RB LC RC
 %token <type_char> STRUCT RETURN IF ELSE WHILE BLANK
 %token <type_char> SEMI COMMA RELOP ASSIGNOP
-%token <type_char> ID TYPE
+%token <type_char> ID
+%token <type_type> TYPE
 
 /* declared non-terminals */
+%type <type_type> Specifier StructSpecifier
+%type <type_field> DefList Def DecList Dec VarDec
+%type <type_field> ExtDef ExtDefList ExtDecList Program
+%type <type_field> VarList
 %type <type_char> OptTag Tag
-%type <type_char> Program ExtDefList ExtDef ExtDecList Specifier
-%type <type_char> StructSpecifier VarDec FunDec VarList
-%type <type_char> ParamDec CompSt StmtList Stmt DefList Def DecList
-%type <type_char> Dec Exp Args /*Comment*/
+%type <type_char> FunDec
+%type <type_char> ParamDec CompSt StmtList Stmt
+%type <type_char> Exp Args /*Comment*/
 
 /* priority and combination*/
 %nonassoc error
@@ -61,6 +59,13 @@ ExtDefList : ExtDef ExtDefList
 	   ;
 ExtDef	: Specifier ExtDecList SEMI 
         {
+		FieldList f = $2;
+		while(f != NULL) {
+			/* TODO:handle array situation */
+			f->type = $1;
+			insertSymbol(f);
+			f = f->next;
+		}
 	}
         | Specifier SEMI
 	{
@@ -78,25 +83,45 @@ ExtDef	: Specifier ExtDecList SEMI
 	;
 ExtDecList : VarDec 
 	   {
+		//printf("I'm in ExtDecList\n");
+		$$ = $1;
 	   }
 	   | VarDec COMMA ExtDecList
 	   {
+		$1->next = $3;
+		$$ = $1;	
 	   }
 	   ;
 
  /* Specifiers */
 Specifier : TYPE
 	  {
+		$$ = $1;
 	  }
 	  | StructSpecifier
 	  {
+		$$ = $1;
+		//printf("typeLength:%d\n", typeLength);
 	  }
 	  ;
 StructSpecifier : STRUCT OptTag LC DefList RC
 		{
+			/* struct defination */
+			$$ = generateType($2, $4);
+			insertType($$);
+			FieldList temp = $4;
+			/*while(temp != NULL) {
+				printf("name:%s\n", temp->name);
+				if(temp->type->kind == STRUCTURE)
+					printf("typeName:%s\n", temp->type->u.structure->name);
+				temp = temp->next;
+			}*/
 		}
 		| STRUCT Tag
 		{
+			/* struct usage */
+			$$ = getTypeAddress($2);
+			//printf("name:%s\n", $$->name);
 		}
 		/*| error RC
 		{
@@ -108,21 +133,32 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 OptTag	: ID
 	{
 		$$ = Filter($1);
+		//printf("ID:%s\n", $$);
 	}
-        | { $$ = NULL; }
+        | 
+	{ 
+		/* TODO:unname struct need to be considered */
+		$$ = NULL; 
+	}
 	;
 Tag	: ID
 	{
 		$$ = Filter($1);
+		//printf("ID:%s\n", $$);
 	}
     	;
 
  /* Declarators */
 VarDec	: ID 
         {
+		//printf("i'm in VarDec\n");
+		$$ = generateField(Filter($1), NULL);
+		//printf("$$->name:%s\n", $$->name);	
 	}
         | VarDec LB INT RB
 	{
+		/* TODO handle array */
+		//$$ = generateField($1, 
 	}
 	/*| error RB
 	{
@@ -208,11 +244,27 @@ Stmt	: Exp SEMI
  /* Local Definitions */
 DefList : Def DefList
 	{
+		FieldList temp = $1;
+		while(temp->next != NULL){
+			temp = temp->next;
+		}
+		temp->next = $2;
+		$$ = $1;
 	}
 	| { $$ = NULL; }
 	;
 Def	: Specifier DecList SEMI
 	{
+		/* int a, b = 1, c[2]; */
+		/* $2 is a FieldList named a, next is b, and b->next is c */
+		FieldList temp = $2;
+		while(temp != NULL) {
+			/*TODO array need to implement differently */
+			temp->type = $1;
+			insertSymbol(temp);
+			temp = temp->next;
+		}
+		$$ = $2;
 	}
 	/*| Comment
 	| error SEMI
@@ -224,16 +276,24 @@ Def	: Specifier DecList SEMI
     	;
 DecList : Dec
 	{
+		$$ = $1;
 	}
 	| Dec COMMA DecList
 	{
+		$1->next = $3;
+		$$ = $1;
 	}
 	;
 Dec	: VarDec
 	{
+		$$ = $1;
 	}
     	| VarDec ASSIGNOP Exp
 	{
+		/* a = 2; only to record a, because initialize in */
+		/* is helpless */
+		$$ = $1;
+		/* TODO: type check */
 	}
 	/*| Comment*/
 	;

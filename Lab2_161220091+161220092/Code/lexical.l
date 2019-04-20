@@ -1,5 +1,6 @@
 %{
  #include "syntax.tab.h"
+ #include "semantic.h"
  int yycolumn = 1;
  #define YY_USER_ACTION \
 	yylloc.first_line = yylloc.last_line = yylineno; \
@@ -28,8 +29,12 @@ id ("_"|{letter})+({letter}|{digit}|"_")*
 	yylval.type_float = atof(yytext);
 	return FLOAT; 
 }
-(int|float)/{blank} {
-	yylval.type_char = yytext;
+(int)/{blank} {
+	yylval.type_type = typeList[0];
+	return TYPE;
+}
+(float)/{blank} {
+	yylval.type_type = typeList[1];
 	return TYPE;
 }
 "+" {return PLUS;}
