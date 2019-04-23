@@ -116,3 +116,36 @@ FieldList getSymbol(char* name) {
 	/* TODO:handle error of use undefined symbol */
 	return NULL;
 }
+
+int typeEqual(Type t1, Type t2){
+	if((t1==NULL)||(t2==NULL))
+		return 0;
+	if(t1->kind==t2->kind){
+		if(t1->kind==BASIC){
+			if(t1->u.basic==t2->u.basic)
+				return 1;
+		}
+		else if(t1->kind==ARRAY){
+			if(typeEqual(t1->u.array.elem,t2->u.array.elem))
+				return 1;
+		}
+		else if(t1->kind==STRUCTURE){
+			FieldList f1=t1->u.structure;
+			FieldList f2=t2->u.structure;
+			if(!f1&&!f2)
+				return 1;
+			else if(f1&&f2){
+				while(f1&&f2){
+					if(!typeEqual(f1->type,f2->type))
+						break;
+					f1=f1->next;
+					f2=f2->next;	
+				}
+				if(!f1&&!f2)
+					return 1;
+			}
+		}
+		//else t1->kind==FUNCTION
+	}
+	return 0;
+}
