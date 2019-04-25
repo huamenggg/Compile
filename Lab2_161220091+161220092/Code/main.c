@@ -90,6 +90,19 @@ void testResult() {
 	}
 }
 
+void funcCheck() {
+	for(int i = 0;i < hashLength;i++){
+		if(funcList[i] != NULL) {
+			FuncList f = funcList[i];
+			while(f != NULL){
+				if(f->status == DEC)
+					printf("Error Type 18 at line %d: Undefined function %s\n", f->line, f->name);
+				f = f->next;
+			}
+		}
+	}
+}
+		
 int main(int argc, char** argv) {
 	if(argc <= 1) return 1;
 	FILE *f = fopen(argv[1], "r");
@@ -100,6 +113,7 @@ int main(int argc, char** argv) {
 	initSemantic();
 	yyrestart(f);
 	yyparse();
-	testResult();
+	funcCheck();
+//	testResult();
 	return 0;
 }

@@ -13,7 +13,7 @@
 %}
 
  /* declared tokens */
-%token <type_int>INT
+%token <type_int> INT
 %token <type_float> FLOAT
 %token <type_char> PLUS MINUS STAR DIV
 %token <type_char> AND OR
@@ -28,10 +28,10 @@
 %type <type_field> DefList Def DecList Dec VarDec
 %type <type_field> ExtDef ExtDefList ExtDecList Program
 %type <type_field> VarList ParamDec
+%type <type_field> CompSt StmtList Stmt
+%type <type_field> Exp Args /*Comment*/
 %type <type_char> OptTag Tag
 %type <type_func> FunDec
-%type <type_char> CompSt StmtList Stmt
-%type <type_char> Exp Args /*Comment*/
 
 /* priority and combination*/
 %nonassoc error
@@ -71,24 +71,26 @@ ExtDef	: Specifier ExtDecList SEMI
 				}
 				t->u.array.elem = $1;
 			}
-			insertSymbol(f);
+			insertSymbol(f, @1.first_line);
 			f = f->next;
 		}
 	}
         | Specifier SEMI
 	{
+		//TODO: finish
 	}
 	| Specifier FunDec CompSt
 	{
 		$2->return_type = $1;
 		$2->status = DEF;
-		insertFunc($2);
+		insertFunc($2, @1.first_line);
+		checkReturnType($1, $3);
 	}
 	| Specifier FunDec SEMI
 	{
 		$2->return_type = $1;
 		$2->status = DEC;
-		insertFunc($2);
+		insertFunc($2, @1.first_line);
 	}
 	/*| Comment
 	| error SEMI
@@ -125,7 +127,7 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 		{
 			/* struct defination */
 			$$ = generateType($2, $4);
-			insertType($$);
+			insertType($$, @1.first_line);
 			/*FieldList temp = $4;
 			while(temp != NULL) {
 				printf("name:%s\n", temp->name);
@@ -137,7 +139,7 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 		| STRUCT Tag
 		{
 			/* struct usage */
-			$$ = getTypeAddress($2);
+			$$ = getTypeAddress($2, @1.first_line, 1);
 			//printf("name:%s\n", $$->name);
 		}
 		/*| error RC
@@ -150,7 +152,6 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 OptTag	: ID
 	{
 		$$ = Filter($1);
-		//printf("ID:%s\n", $$);
 	}
         | 
 	{ 
@@ -229,7 +230,7 @@ ParamDec: Specifier VarDec
 				t = t->u.array.elem;
 			t->u.array.elem = $1;
 		}
-		insertSymbol(f);
+		insertSymbol(f, @1.first_line);
 		$$ = $2;
 	}
 	;
@@ -237,6 +238,7 @@ ParamDec: Specifier VarDec
  /* Statements */
 CompSt	: LC DefList StmtList RC
 	{
+		$$ = $3;
 	}
 	/*| error DefList StmtList RC
 	{
@@ -247,27 +249,41 @@ CompSt	: LC DefList StmtList RC
         ;
 StmtList: Stmt StmtList
 	{
+		if($1 == NULL) $1 = $2;
+		else $1->next = $2;
+		$$ = $1;
 	}
 	| { $$ = NULL; }
 	;
 Stmt	: Exp SEMI
 	{
+		$$ = NULL;
 	}
      	| CompSt
 	{
+		$$ = $1;
 	}
 	| RETURN Exp SEMI
 	{
-	
+		char returnLine[50];
+		sprintf(returnLine, "%d", @1.first_line);
+		strcpy($2->name, returnLine);
+		$$ = $2;
 	}
 	| IF LP Exp RP Stmt %prec LOWER_THAN_ELSE
 	{
+		checkIfType($3);
+		$$ = NULL;
 	}
 	| IF LP Exp RP Stmt ELSE Stmt
 	{
+		checkIfType($3);
+		$$ = NULL;
 	}
 	| WHILE LP Exp RP Stmt
 	{
+		checkIfType($3);
+		$$ = NULL;
 	}
 	/*| Comment
 	| error SEMI
@@ -293,9 +309,6 @@ DefList : Def DefList
 		}
 		temp->next = $2;
 		$$ = $1;
-		printf("in DefList\n");
-		//if(getSymbol(temp->name))
-		//	printf("Error type 3\n");
 	}
 	| { $$ = NULL; }
 	;
@@ -314,7 +327,7 @@ Def	: Specifier DecList SEMI
 					t = t->u.array.elem;
 				t->u.array.elem = $1;
 			}
-			insertSymbol(f);
+			insertSymbol(f, @1.first_line);
 			f = f->next;
 		}
 		$$ = $2;
@@ -343,10 +356,8 @@ Dec	: VarDec
 	}
     	| VarDec ASSIGNOP Exp
 	{
-		/* a = 2; only to record a, because initialize in */
-		/* is helpless */
+		//TODO: if in struct need to error
 		$$ = $1;
-		/* TODO: type check */
 	}
 	/*| Comment*/
 	;
@@ -354,35 +365,35 @@ Dec	: VarDec
  /* Expressions */
 Exp	: Exp ASSIGNOP Exp
 	{
-		$$=checkExp($1,$3,"ASSIGNOP",@1.first_line);		
+		$$ = checkExp($1, $3, "ASSIGNOP", @1.first_line);		
 	}
     	| Exp AND Exp
 	{
-		$$=checkExp($1,$3,"AND",@1.first_line);		
+		$$ = checkExp($1, $3, "AND", @1.first_line);		
 	}
 	| Exp OR Exp
 	{
-		$$=checkExp($1,$3,"OR",@1.first_line);		
+		$$ = checkExp($1, $3, "OR", @1.first_line);		
 	}
     	| Exp RELOP Exp
 	{
-		$$=checkExp($1,$3,"RELOP",@1.first_line);		
+		$$ = checkExp($1, $3, "RELOP", @1.first_line);		
 	}
     	| Exp PLUS Exp
 	{
-		$$=checkExp($1,$3,"PLUS",@1.first_line);		
+		$$ = checkExp($1, $3, "PLUS", @1.first_line);		
 	}
     	| Exp MINUS Exp
 	{
-		$$=checkExp($1,$3,"MINUS",@1.first_line);		
+		$$ = checkExp($1, $3, "MINUS", @1.first_line);		
 	}
     	| Exp STAR Exp
 	{
-		$$=checkExp($1,$3,"STAR",@1.first_line);		
+		$$ = checkExp($1, $3, "STAR", @1.first_line);		
 	}
     	| Exp DIV Exp
 	{
-		$$=checkExp($1,$3,"DIV",@1.first_line);		
+		$$ = checkExp($1, $3, "DIV", @1.first_line);		
 	}
     	| LP Exp RP
 	{
@@ -390,7 +401,7 @@ Exp	: Exp ASSIGNOP Exp
 	}
 	| MINUS Exp
 	{
-				
+		//TODO: if need to judge Exp type			
 	}
 	| NOT Exp
 	{
@@ -398,33 +409,42 @@ Exp	: Exp ASSIGNOP Exp
 	}
 	| ID LP Args RP
 	{
-		$$=checkExp(Filter($1),NULL,"FUNC",@1.first_line);	
+		$$ = checkExpFunc(Filter($1), $3, @1.first_line);
 	}
 	| ID LP RP
 	{
-		$$=checkExp(Filter($1),NULL,"FUNC",@1.first_line);				
+		$$ = checkExpFunc(Filter($1), NULL, @1.first_line);	
 	}
 	| Exp LB Exp RB
 	{
-		$$=checkExp($1,$3,"ARRAY",@1.first_line);
-		//checkExpArray($1,$3,@1.first_line);			
+		$$ = checkExpArray($1, $3, @1.first_line);
+		if($$ != NULL)
+			strcpy($$->isLeftValue, "true");
 	}
 	| Exp DOT ID
 	{
-		$$=checkExp($1,Filter($3),"STRUCT",@1.first_line);
-		//$$=checkExpStruct($1,Filter($3),@1.first_line);
+		$$ = checkExpStruct($1, Filter($3), @1.first_line);
+		if($$ != NULL)
+			strcpy($$->isLeftValue, "true");
 	}
 	| ID
 	{
-		$$=checkExp(Filter($1),NULL,"ID",@1.first_line);
+		$$ = checkExpID(Filter($1), @1.first_line);
+		if($$ != NULL)
+			strcpy($$->isLeftValue, "true");
 	}
 	| INT
 	{
-		$$="INT";		
+		char int2char[50];
+		sprintf(int2char, "%d", $1);	
+		$$ = generateField(int2char, typeList[0]);		
 	}
 	| FLOAT
 	{
-		$$="FLOAT";		
+		char float2char[100];
+		sprintf(float2char, "%f", $1);
+		Split0(float2char);
+		$$ = generateField(float2char, typeList[1]);		
 	}
 	/*| Comment
 	| error RB 
@@ -443,9 +463,12 @@ Exp	: Exp ASSIGNOP Exp
 	;*/
 Args	: Exp COMMA Args
 	{
+		$1->next = $3;
+		$$ = $1;
 	}
      	| Exp
 	{
+		$$ = $1;	
 	}
 	;
 %%

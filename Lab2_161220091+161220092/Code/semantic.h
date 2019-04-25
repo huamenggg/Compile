@@ -35,6 +35,7 @@ struct FieldList_
 	char name[maxIdLength];
 	Type type;
 	FieldList next;
+	char isLeftValue[10];
 };
 
 struct FuncList_
@@ -44,6 +45,7 @@ struct FuncList_
 	char name[maxIdLength];
 	FieldList parameters;
 	FuncList next;
+	int line;
 };
 
 typedef struct YYSTYPE
@@ -67,31 +69,37 @@ char* Filter(char* string);
 
 //hash_pjw
 int getHashIndex(char* string);
+
 //symbol table
-FieldList insertSymbol(FieldList field);
+FieldList insertSymbol(FieldList field, int line);
 FieldList getSymbol(char* name);
+
 //type table
-Type getTypeAddress(char* typeName);
-Type insertType(Type type);
+Type getTypeAddress(char* typeName, int line, int ifPrint);
+Type insertType(Type type, int line);
 Type generateTypeArray(int size);
 Type generateType(char* name, FieldList head);
 FieldList generateField(char* name, Type type);
+
 //function table
-FuncList insertFunc(FuncList Func);
-//parameter could be NULL
+FuncList insertFunc(FuncList Func, int line);
 FuncList generateFunc(char* name, FieldList parameter, Type return_type);
 FuncList getFuncAddress(char* funcName);
-int checkFuncEqual(FuncList f1, FuncList f2);
 
 //Equal
+int checkFuncEqual(FuncList f1, FuncList f2, int line, int ifPrint);
+int checkParameter(char* funcName, FieldList f1, FieldList f2, int line, int ifPrint);
 int typeEqual(Type type1, Type type2);
-//error
-//exp
-char* checkExp(char* exp1, char* exp2, char* error, int line);
-char* checkExp2(char* exp1, char* exp2, char* error, int line);
-char*checkExpID(char* exp, int line);
-char* checkExpArray(char* exp1, char* exp2, int line);
-char* checkExpStruct(char* exp1, char* exp2, int line);
-char* checkExpFunc(char* exp, int line);
 
+//error check
+FieldList checkExp(FieldList exp1, FieldList exp2, char* error, int line);
+FieldList checkExpID(char* exp, int line);
+FieldList checkExpArray(FieldList array, FieldList index, int line);
+FieldList checkExpStruct(FieldList exp1, char* exp2, int line);
+FieldList checkExpFunc(char* funcName, FieldList parameter, int line);
+void checkIfType(FieldList f);
+void checkReturnType(Type request, FieldList f);
+
+//others
+void Split0(char* string);
 #endif
