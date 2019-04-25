@@ -266,6 +266,9 @@ DefList : Def DefList
 		}
 		temp->next = $2;
 		$$ = $1;
+		printf("in DefList\n");
+		//if(getSymbol(temp->name))
+		//	printf("Error type 3\n");
 	}
 	| { $$ = NULL; }
 	;
@@ -324,57 +327,76 @@ Dec	: VarDec
  /* Expressions */
 Exp	: Exp ASSIGNOP Exp
 	{
+		checkExp2($1,$3,"ASSIGNOP",@1.first_line);		
 	}
     	| Exp AND Exp
 	{
+		checkExp2($1,$3,"AND",@1.first_line);		
 	}
 	| Exp OR Exp
 	{
+		checkExp2($1,$3,"OR",@1.first_line);		
 	}
     	| Exp RELOP Exp
 	{
+		checkExp2($1,$3,"RELOP",@1.first_line);		
 	}
     	| Exp PLUS Exp
 	{
+		checkExp2($1,$3,"PLUS",@1.first_line);		
 	}
     	| Exp MINUS Exp
 	{
+		checkExp2($1,$3,"MINUS",@1.first_line);		
 	}
     	| Exp STAR Exp
 	{
+		checkExp2($1,$3,"STAR",@1.first_line);		
 	}
     	| Exp DIV Exp
 	{
+		checkExp2($1,$3,"DIV",@1.first_line);		
 	}
     	| LP Exp RP
 	{
+				
 	}
 	| MINUS Exp
 	{
+				
 	}
 	| NOT Exp
 	{
+				
 	}
 	| ID LP Args RP
 	{
+			
 	}
 	| ID LP RP
 	{
+				
 	}
 	| Exp LB Exp RB
 	{
+		checkExpArray($1,$3,@1.first_line);			
 	}
 	| Exp DOT ID
 	{
+		$$=checkExpStruct($1,$3,@1.first_line);		
 	}
 	| ID
 	{
+		$$=Filter($1);
+		checkExpID($$,@1.first_line);
 	}
 	| INT
 	{
+		$$="INT";		
 	}
 	| FLOAT
 	{
+		$$="FLOAT";		
 	}
 	/*| Comment
 	| error RB 
