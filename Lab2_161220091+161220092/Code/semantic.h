@@ -86,9 +86,12 @@ int checkFuncEqual(FuncList f1, FuncList f2);
 //Equal
 int typeEqual(Type type1, Type type2);
 //error
-void checkExp2(char* exp1,char* exp2,char* error,int line);
-void checkExpID(char* exp,int line);
-void checkExpArray(char* exp1,char* exp2,int line);
-char* checkExpStruct(char* exp1,char* exp2,int line);
+//exp
+char* checkExp(char* exp1, char* exp2, char* error, int line);
+char* checkExp2(char* exp1, char* exp2, char* error, int line);
+char*checkExpID(char* exp, int line);
+char* checkExpArray(char* exp1, char* exp2, int line);
+char* checkExpStruct(char* exp1, char* exp2, int line);
+char* checkExpFunc(char* exp, int line);
 
 #endif
