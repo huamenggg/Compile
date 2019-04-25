@@ -81,6 +81,7 @@ FuncList insertFunc(FuncList Func);
 //parameter could be NULL
 FuncList generateFunc(char* name, FieldList parameter, Type return_type);
 FuncList getFuncAddress(char* funcName);
+int checkFuncEqual(FuncList f1, FuncList f2);
 
 //Equal
 int typeEqual(Type type1, Type type2);

@@ -148,8 +148,12 @@ FuncList insertFunc(FuncList Func) {
 		f->next = funcList[index];
 		funcList[index] = f;
 	}
-	else if(f->status == DEC)
-		f->status = Func->status;
+	else if(f->status == DEC) {
+		if(checkFuncEqual(f, Func) == 1)
+			f->status = Func->status;
+		else
+			printf("Error type ?? at Line ?: Function declaration mismatch with defination.\n");
+	}
 	else {
 		/* TODO:line */
 		printf("Error type ?? at Line ?: Redefined function '%s'.\n", Func->name);
@@ -171,6 +175,17 @@ FuncList getFuncAddress(char* funName) {
 	return NULL;
 }
 
+int checkFuncEqual(FuncList f1, FuncList f2) {
+	if(typeEqual(f1->return_type, f2->return_type) == 0) return 0;
+	FieldList p1 = f1->parameters, p2 = f2->parameters;
+	while(p1 != NULL && p2 != NULL) {
+		if(typeEqual(p1->type, p2->type) == 0) return 0;
+		p1 = p1->next;
+		p2 = p2->next;
+	}
+	if(p1 == NULL && p2 == NULL) return 1;
+	return 0;	
+}
 
 int typeEqual(Type t1, Type t2){
 	if(!(t1&&t2))
