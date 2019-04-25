@@ -114,6 +114,10 @@ FieldList insertSymbol(FieldList field) {
 }
 
 FieldList getSymbol(char* name) {
+	//mmm
+	if(name == NULL)
+		return NULL;
+
 	int index = getHashIndex(name);
 	//printf("name:%s\t", name);
 	//printf("index:%d\n", index);
@@ -152,11 +156,12 @@ FuncList insertFunc(FuncList Func) {
 		if(checkFuncEqual(f, Func) == 1)
 			f->status = Func->status;
 		else
+			/*TODO:error*/
 			printf("Error type ?? at Line ?: Function declaration mismatch with defination.\n");
 	}
 	else {
 		/* TODO:line */
-		printf("Error type ?? at Line ?: Redefined function '%s'.\n", Func->name);
+		printf("Error type 4 at Line ?: Redefined function '%s'.\n", Func->name);
 	}
 	return f;
 
@@ -220,17 +225,48 @@ int typeEqual(Type t1, Type t2){
 	return 0;
 }
 
-void checkExp2(char* exp1,char* exp2,char* error,int line){
-	printf("CheckExp2:%s,%s,%s\n",exp1,exp2,error);
+char* checkExp(char* exp1,char* exp2,char* error,int line){
+	printf("CheckExp:%s,%s,%s\n",exp1,exp2,error);
+	if(!strcmp(error,"ASSIGNOP")||
+		!strcmp(error,"AND")||
+		!strcmp(error,"OR")||
+		!strcmp(error,"RELOP")||
+		!strcmp(error,"PLUS")||
+		!strcmp(error,"MINUS")||
+		!strcmp(error,"STAR")||
+		!strcmp(error,"DIV")){
+		return checkExp2(exp1,exp2,error,line);
+	}
+	else if(!strcmp(error,"ARRAY")){
+		return checkExpArray(exp1,exp2,line);
+	}
+	else if(!strcmp(error,"STRUCT")){
+		return checkExpStruct(exp1,exp2,line);
+	}
+	else if(!strcmp(error,"ID")){
+		return checkExpID(exp1,line);
+	}
+	else if(!strcmp(error,"FUNC")){
+		return checkExpFunc(exp1,line);
+	}
+}
+
+char* checkExp2(char* exp1,char* exp2,char* error,int line){
+	printf("CheckExp%s:%s,%s\n",error,exp1,exp2);
+	if(!exp1||!exp2)
+		return NULL;
 	if(!strcmp(error,"ASSIGNOP")){
 		FieldList f1=getSymbol(exp1);
 	     	FieldList f2=getSymbol(exp2);
 		if(!f1||!f2){
 			//printf("%s,%s\n",exp1,exp2);
+			
 			if(!strcmp(exp1,"INT")||!strcmp(exp1,"FLOAT")){
 				printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", line);
+				return NULL;
 			}
 			int temp1=0,temp2=0;
+			//printf("??\n");
 			if(f1)
 				temp1=f1->type->u.basic;
 			else{
@@ -238,6 +274,8 @@ void checkExp2(char* exp1,char* exp2,char* error,int line){
 					temp1=1;
 				else if(!strcmp(exp1,"INT"))
 					temp1=0;
+				//else
+				//	return NULL;
 			}
 			if(f2)
 				temp2=f2->type->u.basic;
@@ -246,12 +284,17 @@ void checkExp2(char* exp1,char* exp2,char* error,int line){
 					temp2=1;
 				else if(!strcmp(exp1,"INT"))
 					temp2=0;
+				//else 
+				//	return NULL;
 			}
-			if(temp1!=temp2)
+			if(temp1!=temp2){
 				printf("Error type 5 at Line %d: Type mismatched for assignment.\n", line);	
+				return NULL;
+			}
 		}
 		else if(typeEqual(f1->type,f2->type)){
 			printf("Error type 5 at Line %d: Type mismatched for assignment.\n", line);
+			return NULL;
 		}
 	} 
 	else if(!strcmp(error,"AND")||
@@ -275,6 +318,8 @@ void checkExp2(char* exp1,char* exp2,char* error,int line){
 					temp1=1;
 				else if(!strcmp(exp1,"INT"))
 					temp1=0;
+				//else 
+				//	return NULL;
 			}
 			if(f2)
 				temp2=f2->type->u.basic;
@@ -283,45 +328,68 @@ void checkExp2(char* exp1,char* exp2,char* error,int line){
 					temp2=1;
 				else if(!strcmp(exp2,"INT"))
 					temp2=0;
+				//else 
+				//	return NULL;
 			}
-			if(temp1!=temp2)
+			if(temp1!=temp2){
 				printf("Error type 7 at Line %d: Type mismatched for operands.\n", line);
+				return NULL;
+			}
 		}
-		else if(!typeEqual(f1->type,f2->type))
+		else if(!typeEqual(f1->type,f2->type)){
 			printf("Error type 7 at Line %d: Type mismatched for operands.\n", line);
-
+			return NULL;
+		}
 	}
+	return exp1;
+
 }
 
-void checkExpID(char* exp, int line){
+char* checkExpID(char* exp, int line){
 	printf("CheckExpID:%s\n",exp);
+	if(!exp)
+		return NULL;
 	FieldList f=getSymbol(exp);
-	if(!f&&exp!="INT"&&exp!="FLOAT")
+	if(!f&&exp!="INT"&&exp!="FLOAT"){
 		printf("Error type 1 at Line %d: Undefined variable '%s'.\n", line, exp);
+		return NULL;
+	}
+	return exp;
 
 }
 
-void checkExpArray(char* exp1,char* exp2,int line){
+char* checkExpArray(char* exp1,char* exp2,int line){
 	printf("CheckExpArray:%s,%s\n",exp1,exp2);
+	if(!exp1||!exp2)
+		return NULL;
 	FieldList f1=getSymbol(exp1);
 	FieldList f2=getSymbol(exp2);
 	printf("%d\n",f1->type->kind);
-	if(f1&&f1->type->kind!=ARRAY)
+	if(f1&&f1->type->kind!=ARRAY){
 		printf("Error type 10 at Line %d: '%s' is not an array.\n", line, exp1);
-	if(f2&&f2->type->u.basic==1)//float
+		return NULL;
+	}
+	if(f2&&f2->type->u.basic==1){//float
 		printf("Error type 12 at Line %d: '%f' is not an integer.\n", line, exp2);
-	else if(!strcmp(exp2,"FLOAT"))
+		return NULL;
+	}
+	else if(!strcmp(exp2,"FLOAT")){
 		printf("Error type 12 at Line %d: '%f' is not an integer.\n", line, exp2);
+		return NULL;	
+	}
+	return exp1;
 }
 
 char* checkExpStruct(char* exp1,char* exp2,int line){
 	printf("CheckExpStruct:%s,%s\n",exp1,exp2);
+	if(!exp1||!exp2)
+		return NULL;
 	FieldList f1=getSymbol(exp1);
 	//FieldList f2=getSymbol(exp2);
 	//printf("%s\n",exp2);
 	if(f1&&f1->type->kind!=STRUCTURE){
 		printf("Error type 13 at Line %d: Illegal use of '.'.\n", line);
-		return exp1;
+		return NULL;
 	}
 	else if(f1){
 		FieldList t=f1->type->u.structure;
@@ -333,8 +401,22 @@ char* checkExpStruct(char* exp1,char* exp2,int line){
 		}
 		if(!t){
 			printf("Error type 14 at Line %d: Non-existent field '%s'.\n", line, exp2);
-			//return exp2;
+			return NULL;
 		}
 	}
 	return exp2;
 }
+
+char* checkExpFunc(char* exp, int line){
+	printf("CheckExpFunc:%s\n",exp);
+	if(!exp)
+		return NULL;
+	FuncList f=getFuncAddress(exp);
+	if(!f){
+		printf("Error type 2 at Line %d: Undefined function '%s'.\n", line, exp);
+		return NULL;
+	}
+	else 
+		return exp;
+}
+
