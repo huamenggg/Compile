@@ -409,6 +409,7 @@ Exp	: Exp ASSIGNOP Exp
 	}
 	| Exp DOT ID
 	{
+		//printf("!!!!!$1:%s $3:%s\n", $1, $3);
 		$$=checkExpStruct($1,$3,@1.first_line);		
 	}
 	| ID
