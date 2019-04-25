@@ -27,10 +27,10 @@
 %type <type_type> Specifier StructSpecifier
 %type <type_field> DefList Def DecList Dec VarDec
 %type <type_field> ExtDef ExtDefList ExtDecList Program
-%type <type_field> VarList
+%type <type_field> VarList ParamDec
 %type <type_char> OptTag Tag
-%type <type_char> FunDec
-%type <type_char> ParamDec CompSt StmtList Stmt
+%type <type_func> FunDec
+%type <type_char> CompSt StmtList Stmt
 %type <type_char> Exp Args /*Comment*/
 
 /* priority and combination*/
@@ -80,6 +80,8 @@ ExtDef	: Specifier ExtDecList SEMI
 	}
 	| Specifier FunDec CompSt
 	{
+		$2->return_type = $1;
+		insertFunc($2);
 	}
 	/*| Comment
 	| error SEMI
@@ -117,8 +119,8 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 			/* struct defination */
 			$$ = generateType($2, $4);
 			insertType($$);
-			FieldList temp = $4;
-			/*while(temp != NULL) {
+			/*FieldList temp = $4;
+			while(temp != NULL) {
 				printf("name:%s\n", temp->name);
 				if(temp->type->kind == STRUCTURE)
 					printf("typeName:%s\n", temp->type->u.structure->name);
@@ -185,9 +187,11 @@ VarDec	: ID
 	;
 FunDec	: ID LP VarList RP
 	{
+		$$ = generateFunc(Filter($1), $3, NULL);
 	}
         | ID LP RP
 	{
+		$$ = generateFunc(Filter($1), NULL, NULL);
 	}
 	/*| error RP
 	{
@@ -198,13 +202,28 @@ FunDec	: ID LP VarList RP
 	;
 VarList : ParamDec COMMA VarList
 	{
+		$1->next = $3;
+		$$ = $1;
 	}
 	| ParamDec
 	{
+		$$ = $1;
 	}
 	;
 ParamDec: Specifier VarDec
 	{
+		FieldList f = $2;
+		if(f->type == NULL) {
+			f->type = $1;
+		}
+		else {
+			Type t = f->type;
+			while(t->u.array.elem != NULL)
+				t = t->u.array.elem;
+			t->u.array.elem = $1;
+		}
+		insertSymbol(f);
+		$$ = $2;
 	}
 	;
 

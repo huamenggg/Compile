@@ -47,6 +47,47 @@ void testResult() {
 			}
 		}
 	}
+	printf("--------------Function List -------------\n");
+	for(int i = 0;i < hashLength;i++){
+		if(funcList[i] != NULL) {
+			FuncList f = funcList[i];
+			int j = 1;
+			while(f != NULL){
+				printf("[%d:%d]funcName:%s\t", i, j, f->name);
+				if(f->return_type == NULL) {
+					printf("\n");
+					f = f->next;
+					continue;
+				}
+				if(f->return_type->kind == BASIC)
+					printf("return type:%d 0 is int 1 is float\n", f->return_type->u.basic);
+				else {
+					printf("return type:%s\n", f->return_type->name);
+				}
+				printf("parameters are:");
+				FieldList t = f->parameters;
+				while(t) {
+					if(t->type->kind == BASIC)
+						printf("%d\n", t->type->u.basic);
+					else if(t->type->kind == ARRAY) {
+						Type t1 = t->type;
+						while(t1->kind == ARRAY) {
+							printf("\t%d", t1->u.array.size);
+							t1 = t1->u.array.elem;
+						}
+						printf("\ttype:%d", t1->kind);
+					}
+					else
+						printf("%s\n", t->type->name);
+					printf(" %s,", t->name);
+					t = t->next;
+				}
+				printf("\n");
+				f = f->next;
+				j++;
+			}
+		}
+	}
 }
 
 int main(int argc, char** argv) {

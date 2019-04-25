@@ -127,6 +127,48 @@ FieldList getSymbol(char* name) {
 	return NULL;
 }
 
+FuncList generateFunc(char* name, FieldList parameter, Type return_type) {
+	FuncList f = (FuncList)malloc(sizeof(struct FuncList_));
+	strcpy(f->name, name);
+	//printf("f->name:%s\n", f->name);
+	f->return_type = return_type;
+	f->parameters = parameter;
+	f->next = NULL;
+	return f;
+}
+
+FuncList insertFunc(FuncList Func) {
+	FuncList f = getFuncAddress(Func->name);
+	if(f == NULL) {
+		int index = getHashIndex(Func->name);
+		f = (FuncList)malloc(sizeof(struct FuncList_));
+		strcpy(f->name, Func->name);
+		f->return_type = Func->return_type;
+		f->parameters = Func->parameters;
+		f->next = funcList[index];
+		funcList[index] = f;
+		return f;
+	}
+	/* TODO:line */
+	printf("Error type ?? at Line ?: Redefined function '%s'.\n", Func->name);
+	return f;
+
+}
+
+FuncList getFuncAddress(char* funName) {
+	int index = getHashIndex(funName);
+	//printf("name:%s\t", name);
+	//printf("index:%d\n", index);
+	FuncList f = funcList[index];
+	while(f != NULL) {
+		if(strcmp(f->name, funName) == 0)
+			return f;
+		f = f->next;
+	}
+	return NULL;
+}
+
+
 int typeEqual(Type t1, Type t2){
 	if(!(t1&&t2))
 		return 0;

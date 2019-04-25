@@ -11,6 +11,7 @@
 
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
+typedef struct FuncList_* FuncList;
 
 struct Type_
 {
@@ -36,6 +37,14 @@ struct FieldList_
 	FieldList next;
 };
 
+struct FuncList_
+{
+	Type return_type;
+	char name[maxIdLength];
+	FieldList parameters;
+	FuncList next;
+};
+
 typedef struct YYSTYPE
 {
 	int type_int;
@@ -43,10 +52,12 @@ typedef struct YYSTYPE
 	char* type_char;
 	Type type_type;
 	FieldList type_field;
+	FuncList type_func;
 } YYSTYPE;
 
-Type typeList[100];
+Type typeList[hashLength];
 FieldList symbolList[hashLength];
+FuncList funcList[hashLength];
 int typeLength;
 
 void initSemantic();
@@ -64,6 +75,11 @@ Type insertType(Type type);
 Type generateTypeArray(int size);
 Type generateType(char* name, FieldList head);
 FieldList generateField(char* name, Type type);
+//function table
+FuncList insertFunc(FuncList Func);
+//parameter could be NULL
+FuncList generateFunc(char* name, FieldList parameter, Type return_type);
+FuncList getFuncAddress(char* funcName);
 
 //Equal
 int typeEqual(Type type1, Type type2);
