@@ -80,6 +80,14 @@ Type generateType(char* name, FieldList head) {
 	return t;
 }
 
+Type generateTypeArray(int size) {
+	Type t = (Type)malloc(sizeof(struct Type_));
+	t->kind = ARRAY;
+	t->u.array.size = size;
+	t->u.array.elem = NULL;
+	return t;
+}
+
 FieldList generateField(char* name, Type type) {
 	FieldList f = (FieldList)malloc(sizeof(struct FieldList_));
 	strcpy(f->name, name);
@@ -117,6 +125,66 @@ FieldList getSymbol(char* name) {
 	}
 	/* TODO:handle error of use undefined symbol */
 	return NULL;
+}
+
+FuncList generateFunc(char* name, FieldList parameter, Type return_type) {
+	FuncList f = (FuncList)malloc(sizeof(struct FuncList_));
+	strcpy(f->name, name);
+	//printf("f->name:%s\n", f->name);
+	f->return_type = return_type;
+	f->parameters = parameter;
+	f->next = NULL;
+	return f;
+}
+
+FuncList insertFunc(FuncList Func) {
+	FuncList f = getFuncAddress(Func->name);
+	if(f == NULL) {
+		int index = getHashIndex(Func->name);
+		f = (FuncList)malloc(sizeof(struct FuncList_));
+		strcpy(f->name, Func->name);
+		f->return_type = Func->return_type;
+		f->parameters = Func->parameters;
+		f->next = funcList[index];
+		funcList[index] = f;
+	}
+	else if(f->status == DEC) {
+		if(checkFuncEqual(f, Func) == 1)
+			f->status = Func->status;
+		else
+			printf("Error type ?? at Line ?: Function declaration mismatch with defination.\n");
+	}
+	else {
+		/* TODO:line */
+		printf("Error type ?? at Line ?: Redefined function '%s'.\n", Func->name);
+	}
+	return f;
+
+}
+
+FuncList getFuncAddress(char* funName) {
+	int index = getHashIndex(funName);
+	//printf("name:%s\t", name);
+	//printf("index:%d\n", index);
+	FuncList f = funcList[index];
+	while(f != NULL) {
+		if(strcmp(f->name, funName) == 0)
+			return f;
+		f = f->next;
+	}
+	return NULL;
+}
+
+int checkFuncEqual(FuncList f1, FuncList f2) {
+	if(typeEqual(f1->return_type, f2->return_type) == 0) return 0;
+	FieldList p1 = f1->parameters, p2 = f2->parameters;
+	while(p1 != NULL && p2 != NULL) {
+		if(typeEqual(p1->type, p2->type) == 0) return 0;
+		p1 = p1->next;
+		p2 = p2->next;
+	}
+	if(p1 == NULL && p2 == NULL) return 1;
+	return 0;	
 }
 
 int typeEqual(Type t1, Type t2){

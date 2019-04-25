@@ -1,0 +1,11 @@
+struct a {
+int i;
+};
+int main(){
+}
+int test(){
+}
+struct a test1(){
+}
+struct b test2(){
+}

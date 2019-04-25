@@ -27,10 +27,10 @@
 %type <type_type> Specifier StructSpecifier
 %type <type_field> DefList Def DecList Dec VarDec
 %type <type_field> ExtDef ExtDefList ExtDecList Program
-%type <type_field> VarList
+%type <type_field> VarList ParamDec
 %type <type_char> OptTag Tag
-%type <type_char> FunDec
-%type <type_char> ParamDec CompSt StmtList Stmt
+%type <type_func> FunDec
+%type <type_char> CompSt StmtList Stmt
 %type <type_char> Exp Args /*Comment*/
 
 /* priority and combination*/
@@ -61,8 +61,16 @@ ExtDef	: Specifier ExtDecList SEMI
         {
 		FieldList f = $2;
 		while(f != NULL) {
-			/* TODO:handle array situation */
-			f->type = $1;
+			if(f->type == NULL) {
+				f->type = $1;
+			}
+			else {
+				Type t = f->type;
+				while(t->u.array.elem != NULL) {
+					t = t->u.array.elem;
+				}
+				t->u.array.elem = $1;
+			}
 			insertSymbol(f);
 			f = f->next;
 		}
@@ -72,6 +80,15 @@ ExtDef	: Specifier ExtDecList SEMI
 	}
 	| Specifier FunDec CompSt
 	{
+		$2->return_type = $1;
+		$2->status = DEF;
+		insertFunc($2);
+	}
+	| Specifier FunDec SEMI
+	{
+		$2->return_type = $1;
+		$2->status = DEC;
+		insertFunc($2);
 	}
 	/*| Comment
 	| error SEMI
@@ -109,8 +126,8 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 			/* struct defination */
 			$$ = generateType($2, $4);
 			insertType($$);
-			FieldList temp = $4;
-			/*while(temp != NULL) {
+			/*FieldList temp = $4;
+			while(temp != NULL) {
 				printf("name:%s\n", temp->name);
 				if(temp->type->kind == STRUCTURE)
 					printf("typeName:%s\n", temp->type->u.structure->name);
@@ -157,8 +174,16 @@ VarDec	: ID
 	}
         | VarDec LB INT RB
 	{
-		/* TODO handle array */
-		//$$ = generateField($1, 
+		Type t = generateTypeArray($3);
+		Type t2 = $1->type;
+		if(t2 == NULL)
+			$1->type = t;
+		else {
+			while(t2->u.array.elem != NULL)
+				t2 = t2->u.array.elem;
+			t2->u.array.elem = t;
+		}
+		$$ = $1;
 	}
 	/*| error RB
 	{
@@ -169,9 +194,11 @@ VarDec	: ID
 	;
 FunDec	: ID LP VarList RP
 	{
+		$$ = generateFunc(Filter($1), $3, NULL);
 	}
         | ID LP RP
 	{
+		$$ = generateFunc(Filter($1), NULL, NULL);
 	}
 	/*| error RP
 	{
@@ -182,13 +209,28 @@ FunDec	: ID LP VarList RP
 	;
 VarList : ParamDec COMMA VarList
 	{
+		$1->next = $3;
+		$$ = $1;
 	}
 	| ParamDec
 	{
+		$$ = $1;
 	}
 	;
 ParamDec: Specifier VarDec
 	{
+		FieldList f = $2;
+		if(f->type == NULL) {
+			f->type = $1;
+		}
+		else {
+			Type t = f->type;
+			while(t->u.array.elem != NULL)
+				t = t->u.array.elem;
+			t->u.array.elem = $1;
+		}
+		insertSymbol(f);
+		$$ = $2;
 	}
 	;
 
@@ -260,12 +302,19 @@ Def	: Specifier DecList SEMI
 	{
 		/* int a, b = 1, c[2]; */
 		/* $2 is a FieldList named a, next is b, and b->next is c */
-		FieldList temp = $2;
-		while(temp != NULL) {
-			/*TODO array need to implement differently */
-			temp->type = $1;
-			insertSymbol(temp);
-			temp = temp->next;
+		FieldList f = $2;
+		while(f != NULL) {
+			if(f->type == NULL) {
+				f->type = $1;
+			}
+			else {
+				Type t = f->type;
+				while(t->u.array.elem != NULL)
+					t = t->u.array.elem;
+				t->u.array.elem = $1;
+			}
+			insertSymbol(f);
+			f = f->next;
 		}
 		$$ = $2;
 	}
