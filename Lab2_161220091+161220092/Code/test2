@@ -1,8 +1,5 @@
-struct test {
-	int a;
-};
-int main() {
-	int mh;
-	struct test b;
-	float hm;
+int main()
+{
+int i=0;
+inc(i);
 }

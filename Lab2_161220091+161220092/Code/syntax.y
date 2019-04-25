@@ -258,6 +258,7 @@ Stmt	: Exp SEMI
 	}
 	| RETURN Exp SEMI
 	{
+	
 	}
 	| IF LP Exp RP Stmt %prec LOWER_THAN_ELSE
 	{
@@ -353,35 +354,35 @@ Dec	: VarDec
  /* Expressions */
 Exp	: Exp ASSIGNOP Exp
 	{
-		checkExp2($1,$3,"ASSIGNOP",@1.first_line);		
+		$$=checkExp($1,$3,"ASSIGNOP",@1.first_line);		
 	}
     	| Exp AND Exp
 	{
-		checkExp2($1,$3,"AND",@1.first_line);		
+		$$=checkExp($1,$3,"AND",@1.first_line);		
 	}
 	| Exp OR Exp
 	{
-		checkExp2($1,$3,"OR",@1.first_line);		
+		$$=checkExp($1,$3,"OR",@1.first_line);		
 	}
     	| Exp RELOP Exp
 	{
-		checkExp2($1,$3,"RELOP",@1.first_line);		
+		$$=checkExp($1,$3,"RELOP",@1.first_line);		
 	}
     	| Exp PLUS Exp
 	{
-		checkExp2($1,$3,"PLUS",@1.first_line);		
+		$$=checkExp($1,$3,"PLUS",@1.first_line);		
 	}
     	| Exp MINUS Exp
 	{
-		checkExp2($1,$3,"MINUS",@1.first_line);		
+		$$=checkExp($1,$3,"MINUS",@1.first_line);		
 	}
     	| Exp STAR Exp
 	{
-		checkExp2($1,$3,"STAR",@1.first_line);		
+		$$=checkExp($1,$3,"STAR",@1.first_line);		
 	}
     	| Exp DIV Exp
 	{
-		checkExp2($1,$3,"DIV",@1.first_line);		
+		$$=checkExp($1,$3,"DIV",@1.first_line);		
 	}
     	| LP Exp RP
 	{
@@ -393,29 +394,29 @@ Exp	: Exp ASSIGNOP Exp
 	}
 	| NOT Exp
 	{
-				
+		
 	}
 	| ID LP Args RP
 	{
-			
+		$$=checkExp(Filter($1),NULL,"FUNC",@1.first_line);	
 	}
 	| ID LP RP
 	{
-				
+		$$=checkExp(Filter($1),NULL,"FUNC",@1.first_line);				
 	}
 	| Exp LB Exp RB
 	{
-		checkExpArray($1,$3,@1.first_line);			
+		$$=checkExp($1,$3,"ARRAY",@1.first_line);
+		//checkExpArray($1,$3,@1.first_line);			
 	}
 	| Exp DOT ID
 	{
-		//printf("!!!!!$1:%s $3:%s\n", $1, $3);
-		$$=checkExpStruct($1,$3,@1.first_line);		
+		$$=checkExp($1,Filter($3),"STRUCT",@1.first_line);
+		//$$=checkExpStruct($1,Filter($3),@1.first_line);
 	}
 	| ID
 	{
-		$$=Filter($1);
-		checkExpID($$,@1.first_line);
+		$$=checkExp(Filter($1),NULL,"ID",@1.first_line);
 	}
 	| INT
 	{
