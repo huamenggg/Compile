@@ -39,6 +39,7 @@ struct FieldList_
 
 struct FuncList_
 {
+	enum { DEC, DEF } status;
 	Type return_type;
 	char name[maxIdLength];
 	FieldList parameters;

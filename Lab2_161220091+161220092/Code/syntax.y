@@ -81,6 +81,13 @@ ExtDef	: Specifier ExtDecList SEMI
 	| Specifier FunDec CompSt
 	{
 		$2->return_type = $1;
+		$2->status = DEF;
+		insertFunc($2);
+	}
+	| Specifier FunDec SEMI
+	{
+		$2->return_type = $1;
+		$2->status = DEC;
 		insertFunc($2);
 	}
 	/*| Comment

@@ -147,10 +147,13 @@ FuncList insertFunc(FuncList Func) {
 		f->parameters = Func->parameters;
 		f->next = funcList[index];
 		funcList[index] = f;
-		return f;
 	}
-	/* TODO:line */
-	printf("Error type ?? at Line ?: Redefined function '%s'.\n", Func->name);
+	else if(f->status == DEC)
+		f->status = Func->status;
+	else {
+		/* TODO:line */
+		printf("Error type ?? at Line ?: Redefined function '%s'.\n", Func->name);
+	}
 	return f;
 
 }
