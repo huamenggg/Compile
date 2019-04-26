@@ -16,6 +16,7 @@ void initSemantic() {
 	typeList[1] = t;
 
 	typeLength = 2;
+	errorLength = 0;
 }
 int IsId(char ch) {
 	if(ch == '_') return 1;
@@ -40,7 +41,6 @@ int getHashIndex(char* string) {
 		if(i = val & ~hashLength)
 			val = (val ^ (i >> 12)) & hashLength;
 	}
-	//printf("hash index:%d\n", val);
 	return val;
 }
 
@@ -51,10 +51,7 @@ Type getTypeAddress(char* typeName, int line, int ifPrint) {
 	if(strcmp(typeName, "float") == 0)
 		return typeList[1];
 	for(i = 2; i < typeLength; i++) {
-		//printf("typeName:%s\n", typeName);
-		//printf("if equal:%s %s %d\n", typeName, typeList[i]->name, strcmp(typeName, typeList[i]->name));
 		if(strcmp(typeName, typeList[i]->name) == 0) {
-			//printf("I'm here %d\n", i);
 			return typeList[i];
 		}
 	}
@@ -64,7 +61,7 @@ Type getTypeAddress(char* typeName, int line, int ifPrint) {
 }
 
 Type insertType(Type type, int line) {
-	if(getTypeAddress(type->name, line, 1) == NULL) {
+	if(getTypeAddress(type->name, line, 0) == NULL) {
 		typeList[typeLength] = type;
 		typeLength++;
 		return type;
@@ -92,13 +89,12 @@ Type generateTypeArray(int size) {
 FieldList generateField(char* name, Type type) {
 	FieldList f = (FieldList)malloc(sizeof(struct FieldList_));
 	strcpy(f->name, name);
-	//printf("f->name:%s\n", f->name);
 	f->type = type;
 	f->next = NULL;
 	return f;
 }
 
-FieldList insertSymbol(FieldList field, int line) {
+FieldList insertSymbol(FieldList field, int line, int ifPrint) {
 	FieldList s = getSymbol(field->name);
 	if(s == NULL) {
 		int index = getHashIndex(field->name);
@@ -109,33 +105,33 @@ FieldList insertSymbol(FieldList field, int line) {
 		symbolList[index] = s;
 		return s;
 	}
-	/* TODO:line */
-	printf("Error type 3 at Line %d: Redefined variable \"%s\".\n", line, field->name);
-	return s;
+	else if(s->status == DECVAR) {
+		s->status = field->status;
+		return s;
+	}
+	if(ifPrint)
+		printf("Error type 3 at Line %d: Redefined variable \"%s\".\n", line, field->name);
+	return NULL;
 }
 
 FieldList getSymbol(char* name) {
-	//mmm
 	if(name == NULL)
 		return NULL;
 
 	int index = getHashIndex(name);
-	//printf("name:%s\t", name);
-	//printf("index:%d\n", index);
 	FieldList s = symbolList[index];
 	while(s != NULL) {
-		if(strcmp(s->name, name) == 0)
+		if(strcmp(s->name, name) == 0){
 			return s;
+		}
 		s = s->next;
 	}
-	/* TODO:handle error of use undefined symbol */
 	return NULL;
 }
 
 FuncList generateFunc(char* name, FieldList parameter, Type return_type) {
 	FuncList f = (FuncList)malloc(sizeof(struct FuncList_));
 	strcpy(f->name, name);
-	//printf("f->name:%s\n", f->name);
 	f->return_type = return_type;
 	f->parameters = parameter;
 	f->next = NULL;
@@ -159,7 +155,7 @@ FuncList insertFunc(FuncList Func, int line) {
 		if(checkFuncEqual(f, Func, line, 0) == 1)
 			f->status = Func->status;
 		else
-			printf("Error type ?? at Line %d: Function declaration mismatch with defination.\n", line);
+			printf("Error type 19 at Line %d: Inconsistent declaration of function \"%s\".\n", line, Func->name);
 	}
 	else {
 		printf("Error type 4 at Line %d: Redefined function \"%s\".\n", line, Func->name);
@@ -170,8 +166,6 @@ FuncList insertFunc(FuncList Func, int line) {
 
 FuncList getFuncAddress(char* funName) {
 	int index = getHashIndex(funName);
-	//printf("name:%s\t", name);
-	//printf("index:%d\n", index);
 	FuncList f = funcList[index];
 	while(f != NULL) {
 		if(strcmp(f->name, funName) == 0)
@@ -183,8 +177,6 @@ FuncList getFuncAddress(char* funName) {
 
 int checkFuncEqual(FuncList f1, FuncList f2, int line, int ifPrint) {
 	if(typeEqual(f1->return_type, f2->return_type) == 0) {
-		if(ifPrint)
-			printf("Error type ?? at line %d: return type error\n", line);
 		return 0;
 	}
 	return checkParameter(f1->name, f1->parameters, f2->parameters, line, ifPrint);	
@@ -221,7 +213,7 @@ int checkParameter(char* funcName, FieldList f1, FieldList f2, int line, int ifP
 	while(f1 != NULL && f2 != NULL) {
 		if(typeEqual(f1->type, f2->type) == 0) {
 			if(ifPrint)
-				printf("Error type ?? at line %d: mismatch parameters\n", line);
+				printf("Error type 7 at line %d: mismatch parameters\n", line);
 			return 0;
 		}
 		f1 = f1->next;
@@ -282,8 +274,7 @@ FieldList checkExp(FieldList exp1, FieldList exp2, char* error, int line){
 			return NULL;
 		}
 		if(exp1->type->kind != BASIC) {
-			//TODO: non int or float participant in calc
-			printf("Error type ?? at Line %d: illegal element to calculator.\n", line);
+			printf("Error type 7 at Line %d: illegal element to calculator.\n", line);
 			return NULL;
 		}
 		return exp1;
@@ -298,7 +289,6 @@ FieldList checkExp(FieldList exp1, FieldList exp2, char* error, int line){
 }
 
 FieldList checkExpID(char* exp, int line){
-	//printf("CheckExpID:%s\n",exp);
 	if(!exp)
 		return NULL;
 	FieldList f= getSymbol(exp);
@@ -311,7 +301,6 @@ FieldList checkExpID(char* exp, int line){
 }
 
 FieldList checkExpArray(FieldList array, FieldList index, int line){
-	//printf("CheckExpArray:%s,%s\n",exp1,exp2);
 	if(!array || !index)
 		return NULL;
 	if(array->type->kind != ARRAY){
@@ -326,7 +315,6 @@ FieldList checkExpArray(FieldList array, FieldList index, int line){
 }
 
 FieldList checkExpStruct(FieldList exp1, char* name, int line){
-	//printf("CheckExpStruct:%s,%s\n",exp1,exp2);
 	if(!exp1 || !name)
 		return NULL;
 	if(exp1->type->kind != STRUCTURE){
@@ -335,7 +323,6 @@ FieldList checkExpStruct(FieldList exp1, char* name, int line){
 	}
 	FieldList t = exp1->type->u.structure;
 	while(t){
-		//printf("%s %s\n",t->name,exp2);
 		if(!strcmp(t->name, name))
 			return t;
 		t = t->next;
@@ -345,13 +332,12 @@ FieldList checkExpStruct(FieldList exp1, char* name, int line){
 }
 
 FieldList checkExpFunc(char* funcName, FieldList parameter, int line){
-	//printf("CheckExpFunc:%s\n",exp);
 	if(!funcName)
 		return NULL;
 	FuncList f = getFuncAddress(funcName);
 	if(!f){
 		if(getSymbol(funcName) || getTypeAddress(funcName, line, 0))
-			printf("Error type 11 at Line %d: \"%s\" is not a function\n", line, funcName);
+			printf("Error type 11 at Line %d: \"%s\" is not a function.\n", line, funcName);
 		else
 			printf("Error type 2 at Line %d: Undefined function \"%s\".\n", line, funcName);
 		return NULL;
@@ -365,17 +351,16 @@ FieldList checkExpFunc(char* funcName, FieldList parameter, int line){
 	}
 }
 
-void checkIfType(FieldList f) {
+void checkIfType(FieldList f, int line) {
 	if(!f || f->type->kind != BASIC || f->type->u.basic != 0) {
-		//TODO: if(a) a isn't int
+		printf("Error type 7 at line %d: The value in If or While isn't type int.\n", line);
 	}
 }
 
 void checkReturnType(Type request, FieldList f) {
 	while(f) {
 		if(typeEqual(request, f->type) == 0) {
-			//TODO: return type error
-			printf("Error type 8 at Line %d: Type mismatched for return\n", atoi(f->name));
+			printf("Error type 8 at Line %d: Type mismatched for return.\n", f->line);
 		}
 		f = f->next;
 	}
@@ -385,4 +370,35 @@ void Split0(char* string) {
 	for(int i = 0;string[i] != '\0';)
 		if(string[i] == '0') string[i] = '\0';
 		else i++;
+}
+
+void printStructError() {
+	for(int i = 0;i < errorLength;i++) {
+		printf("Error type 15 at Line %d: Redefined field \"%s\".\n", errorSymbol[i]->line, errorSymbol[i]->name);
+	}
+	errorLength = 0;
+}
+
+void printVarError() {
+	for(int i = 0;i < errorLength;i++) {
+		printf("Error type 3 at Line %d: Redefined variable \"%s\".\n", errorSymbol[i]->line, errorSymbol[i]->name);
+	}
+	errorLength = 0;
+}
+
+void printStructFollowEqualError(FieldList f) {
+	while(f) {
+		if(strcmp(f->isFollowEqual, "true") == 0)
+			printf("Error type 15 at Line %d: field \"%s\" isn't allowed to be assigned.\n", f->line, f->name);
+		f = f->next;
+	}
+}
+
+void changeFieldToDec(FieldList f) {
+	FieldList f1;
+	while(f) {
+		f1 = getSymbol(f->name);
+		f1->status = DECVAR;
+		f = f->next;
+	}
 }

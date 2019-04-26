@@ -1,9 +1,11 @@
 struct Position
 {
 	float x, y;
-	int x;
-	int a = 1;
 };
+
+int func(int a);
+
+int func(struct Position p);
 
 int main()
 {

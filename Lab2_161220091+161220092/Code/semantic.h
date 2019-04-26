@@ -36,6 +36,9 @@ struct FieldList_
 	Type type;
 	FieldList next;
 	char isLeftValue[10];
+	char isFollowEqual[10];
+	int line;
+	enum { DEFVAR, DECVAR } status;
 };
 
 struct FuncList_
@@ -61,7 +64,9 @@ typedef struct YYSTYPE
 Type typeList[hashLength];
 FieldList symbolList[hashLength];
 FuncList funcList[hashLength];
+FieldList errorSymbol[hashLength];
 int typeLength;
+int errorLength;
 
 void initSemantic();
 int IsId(char ch);
@@ -71,7 +76,7 @@ char* Filter(char* string);
 int getHashIndex(char* string);
 
 //symbol table
-FieldList insertSymbol(FieldList field, int line);
+FieldList insertSymbol(FieldList field, int line, int ifPrint);
 FieldList getSymbol(char* name);
 
 //type table
@@ -97,9 +102,13 @@ FieldList checkExpID(char* exp, int line);
 FieldList checkExpArray(FieldList array, FieldList index, int line);
 FieldList checkExpStruct(FieldList exp1, char* exp2, int line);
 FieldList checkExpFunc(char* funcName, FieldList parameter, int line);
-void checkIfType(FieldList f);
+void checkIfType(FieldList f, int line);
 void checkReturnType(Type request, FieldList f);
 
 //others
 void Split0(char* string);
+void printStructError();
+void printVarError();
+void printStructFollowEqualError(FieldList f);
+void changeFieldToDec(FieldList f);
 #endif

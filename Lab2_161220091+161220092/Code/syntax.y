@@ -8,8 +8,6 @@
  #include "string.h"
  void yyerror(const char* s);
  int errorNum = 0;
- #define RED "\033[0;32;31m"
- #define NONE "\033[m"
 %}
 
  /* declared tokens */
@@ -71,13 +69,12 @@ ExtDef	: Specifier ExtDecList SEMI
 				}
 				t->u.array.elem = $1;
 			}
-			insertSymbol(f, @1.first_line);
+			insertSymbol(f, @1.first_line, 1);
 			f = f->next;
 		}
 	}
         | Specifier SEMI
 	{
-		//TODO: finish
 	}
 	| Specifier FunDec CompSt
 	{
@@ -91,6 +88,8 @@ ExtDef	: Specifier ExtDecList SEMI
 		$2->return_type = $1;
 		$2->status = DEC;
 		insertFunc($2, @1.first_line);
+		changeFieldToDec($2->parameters);
+		errorLength = 0;
 	}
 	/*| Comment
 	| error SEMI
@@ -102,7 +101,6 @@ ExtDef	: Specifier ExtDecList SEMI
 	;
 ExtDecList : VarDec 
 	   {
-		//printf("I'm in ExtDecList\n");
 		$$ = $1;
 	   }
 	   | VarDec COMMA ExtDecList
@@ -120,27 +118,20 @@ Specifier : TYPE
 	  | StructSpecifier
 	  {
 		$$ = $1;
-		//printf("typeLength:%d\n", typeLength);
 	  }
 	  ;
 StructSpecifier : STRUCT OptTag LC DefList RC
 		{
 			/* struct defination */
-			$$ = generateType($2, $4);
+			$$ = generateType($2, $4);	
 			insertType($$, @1.first_line);
-			/*FieldList temp = $4;
-			while(temp != NULL) {
-				printf("name:%s\n", temp->name);
-				if(temp->type->kind == STRUCTURE)
-					printf("typeName:%s\n", temp->type->u.structure->name);
-				temp = temp->next;
-			}*/
+			printStructError();
+			printStructFollowEqualError($4);
 		}
 		| STRUCT Tag
 		{
 			/* struct usage */
 			$$ = getTypeAddress($2, @1.first_line, 1);
-			//printf("name:%s\n", $$->name);
 		}
 		/*| error RC
 		{
@@ -155,23 +146,21 @@ OptTag	: ID
 	}
         | 
 	{ 
-		/* TODO:unname struct need to be considered */
-		$$ = NULL; 
+		char name[20];
+		sprintf(name, "Unname%d", @$.first_line);
+		$$ = name; 
 	}
 	;
 Tag	: ID
 	{
 		$$ = Filter($1);
-		//printf("ID:%s\n", $$);
 	}
     	;
 
  /* Declarators */
 VarDec	: ID 
         {
-		//printf("i'm in VarDec\n");
-		$$ = generateField(Filter($1), NULL);
-		//printf("$$->name:%s\n", $$->name);	
+		$$ = generateField(Filter($1), NULL);	
 	}
         | VarDec LB INT RB
 	{
@@ -208,6 +197,7 @@ FunDec	: ID LP VarList RP
 				": something wrong before ')'\n", @2.first_line);
 	}*/
 	;
+
 VarList : ParamDec COMMA VarList
 	{
 		$1->next = $3;
@@ -218,6 +208,7 @@ VarList : ParamDec COMMA VarList
 		$$ = $1;
 	}
 	;
+
 ParamDec: Specifier VarDec
 	{
 		FieldList f = $2;
@@ -230,7 +221,12 @@ ParamDec: Specifier VarDec
 				t = t->u.array.elem;
 			t->u.array.elem = $1;
 		}
-		insertSymbol(f, @1.first_line);
+		f->status = DEFVAR;
+		if(insertSymbol(f, @1.first_line, 0) == NULL) {
+			f->line = @1.first_line;
+			errorSymbol[errorLength] = f;
+			errorLength++;
+		}
 		$$ = $2;
 	}
 	;
@@ -238,14 +234,9 @@ ParamDec: Specifier VarDec
  /* Statements */
 CompSt	: LC DefList StmtList RC
 	{
+		printVarError();
 		$$ = $3;
 	}
-	/*| error DefList StmtList RC
-	{
-		errorNum++;
-		printf(RED"Error type B"NONE" at line"RED" %d"NONE
-				": something wrong before '}'\n", @4.first_line);
-	}*/
         ;
 StmtList: Stmt StmtList
 	{
@@ -265,24 +256,22 @@ Stmt	: Exp SEMI
 	}
 	| RETURN Exp SEMI
 	{
-		char returnLine[50];
-		sprintf(returnLine, "%d", @1.first_line);
-		strcpy($2->name, returnLine);
-		$$ = $2;
+		$$ = generateField("return", $2->type);
+		$$->line = @1.first_line;
 	}
 	| IF LP Exp RP Stmt %prec LOWER_THAN_ELSE
 	{
-		checkIfType($3);
+		checkIfType($3, @1.first_line);
 		$$ = NULL;
 	}
 	| IF LP Exp RP Stmt ELSE Stmt
 	{
-		checkIfType($3);
+		checkIfType($3, @1.first_line);
 		$$ = NULL;
 	}
 	| WHILE LP Exp RP Stmt
 	{
-		checkIfType($3);
+		checkIfType($3, @1.first_line);
 		$$ = NULL;
 	}
 	/*| Comment
@@ -327,7 +316,12 @@ Def	: Specifier DecList SEMI
 					t = t->u.array.elem;
 				t->u.array.elem = $1;
 			}
-			insertSymbol(f, @1.first_line);
+			f->status = DEFVAR;
+			if(insertSymbol(f, @1.first_line, 0) == NULL) {
+				f->line = @1.first_line;
+				errorSymbol[errorLength] = f;
+				errorLength++;
+			}
 			f = f->next;
 		}
 		$$ = $2;
@@ -356,7 +350,8 @@ Dec	: VarDec
 	}
     	| VarDec ASSIGNOP Exp
 	{
-		//TODO: if in struct need to error
+		strcpy($1->isFollowEqual, "true");
+		$1->line = @1.first_line;
 		$$ = $1;
 	}
 	/*| Comment*/

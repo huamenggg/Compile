@@ -96,7 +96,7 @@ void funcCheck() {
 			FuncList f = funcList[i];
 			while(f != NULL){
 				if(f->status == DEC)
-					printf("Error Type 18 at line %d: Undefined function %s\n", f->line, f->name);
+					printf("Error Type 18 at line %d: Undefined function \"%s\".\n", f->line, f->name);
 				f = f->next;
 			}
 		}
