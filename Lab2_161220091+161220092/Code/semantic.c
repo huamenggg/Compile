@@ -56,7 +56,7 @@ Type getTypeAddress(char* typeName, int line, int ifPrint) {
 		}
 	}
 	if(ifPrint)
-		printf("Error type 17 at Line %d: Undefined structure \"%s\".\n", line, typeName);
+		printf("Error type "RED"17"NONE" at Line "RED"%d"NONE": Undefined structure \"%s\".\n", line, typeName);
 	return NULL;
 }
 
@@ -66,7 +66,7 @@ Type insertType(Type type, int line) {
 		typeLength++;
 		return type;
 	}
-	printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", line, type->name);
+	printf("Error type "RED"16"NONE" at Line "RED"%d"NONE": Duplicated name \"%s\".\n", line, type->name);
 	return type;
 }
 
@@ -110,7 +110,7 @@ FieldList insertSymbol(FieldList field, int line, int ifPrint) {
 		return s;
 	}
 	if(ifPrint)
-		printf("Error type 3 at Line %d: Redefined variable \"%s\".\n", line, field->name);
+		printf("Error type "RED"3"NONE" at Line "RED"%d"NONE": Redefined variable \"%s\".\n", line, field->name);
 	return NULL;
 }
 
@@ -155,10 +155,10 @@ FuncList insertFunc(FuncList Func, int line) {
 		if(checkFuncEqual(f, Func, line, 0) == 1)
 			f->status = Func->status;
 		else
-			printf("Error type 19 at Line %d: Inconsistent declaration of function \"%s\".\n", line, Func->name);
+			printf("Error type "RED"19"NONE" at Line "RED"%d"NONE": Inconsistent declaration of function \"%s\".\n", line, Func->name);
 	}
 	else {
-		printf("Error type 4 at Line %d: Redefined function \"%s\".\n", line, Func->name);
+		printf("Error type "RED"4"NONE" at Line "RED"%d"NONE": Redefined function \"%s\".\n", line, Func->name);
 	}
 	return f;
 
@@ -213,7 +213,7 @@ int checkParameter(char* funcName, FieldList f1, FieldList f2, int line, int ifP
 	while(f1 != NULL && f2 != NULL) {
 		if(typeEqual(f1->type, f2->type) == 0) {
 			if(ifPrint)
-				printf("Error type 7 at line %d: mismatch parameters\n", line);
+				printf("Error type "RED"7"NONE" at line "RED"%d"NONE": mismatch parameters\n", line);
 			return 0;
 		}
 		f1 = f1->next;
@@ -221,7 +221,7 @@ int checkParameter(char* funcName, FieldList f1, FieldList f2, int line, int ifP
 	}
 	if(f1 == NULL && f2 == NULL) return 1;
 	if(ifPrint) {
-		printf("Error type 9 at line %d: Function \"%s(", line, funcName);
+		printf("Error type "RED"9"NONE" at line "RED"%d"NONE": Function \"%s(", line, funcName);
 		printParaType(t1);
 		printf(")\" is not applicable for arguments \"(");
 		printParaType(t2);
@@ -254,11 +254,11 @@ FieldList checkExp(FieldList exp1, FieldList exp2, char* error, int line){
 		return NULL;
 	if(!strcmp(error,"ASSIGNOP")){
 		if(strcmp(exp1->isLeftValue, "true") != 0) {
-			printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", line);
+			printf("Error type "RED"6"NONE" at Line "RED"%d"NONE": The left-hand side of an assignment must be a variable.\n", line);
 			return NULL;
 		}
 		if(typeEqual(exp1->type, exp2->type) == 0){
-			printf("Error type 5 at Line %d: Type mismatched for assignment.\n", line);
+			printf("Error type "RED"5"NONE" at Line "RED"%d"NONE": Type mismatched for assignment.\n", line);
 			return NULL;
 		}
 		return exp1;
@@ -270,18 +270,18 @@ FieldList checkExp(FieldList exp1, FieldList exp2, char* error, int line){
 		!strcmp(error,"STAR")||
 		!strcmp(error,"DIV")) {
 		if(typeEqual(exp1->type, exp2->type) == 0){
-			printf("Error type 7 at Line %d: Type mismatched for operands.\n", line);
+			printf("Error type "RED"7"NONE" at Line "RED"%d"NONE": Type mismatched for operands.\n", line);
 			return NULL;
 		}
 		if(exp1->type->kind != BASIC) {
-			printf("Error type 7 at Line %d: illegal element to calculator.\n", line);
+			printf("Error type "RED"7"NONE" at Line "RED"%d"NONE": illegal element to calculator.\n", line);
 			return NULL;
 		}
 		return exp1;
 	}
 	else {
 		if(typeEqual(exp1->type, exp2->type) == 0){
-			printf("Error type 7 at Line %d: Type mismatched for operands.\n", line);
+			printf("Error type "RED"7"NONE" at Line "RED"%d"NONE": Type mismatched for operands.\n", line);
 			return NULL;
 		}
 		return generateField("relopResult", typeList[0]);
@@ -293,7 +293,7 @@ FieldList checkExpID(char* exp, int line){
 		return NULL;
 	FieldList f= getSymbol(exp);
 	if(!f){
-		printf("Error type 1 at Line %d: Undefined variable \"%s\".\n", line, exp);
+		printf("Error type "RED"1"NONE" at Line "RED"%d"NONE": Undefined variable \"%s\".\n", line, exp);
 		return NULL;
 	}
 	return f;
@@ -304,11 +304,11 @@ FieldList checkExpArray(FieldList array, FieldList index, int line){
 	if(!array || !index)
 		return NULL;
 	if(array->type->kind != ARRAY){
-		printf("Error type 10 at Line %d: \"%s\" is not an array.\n", line, array->name);
+		printf("Error type "RED"10"NONE" at Line "RED"%d"NONE": \"%s\" is not an array.\n", line, array->name);
 		return NULL;
 	}
 	if(index->type->kind != BASIC || index->type->u.basic == 1){
-		printf("Error type 12 at Line %d: \"%s\" is not an integer.\n", line, index->name);
+		printf("Error type "RED"12"NONE" at Line "RED"%d"NONE": \"%s\" is not an integer.\n", line, index->name);
 		return NULL;
 	}
 	return generateField("subarray", array->type->u.array.elem);
@@ -318,7 +318,7 @@ FieldList checkExpStruct(FieldList exp1, char* name, int line){
 	if(!exp1 || !name)
 		return NULL;
 	if(exp1->type->kind != STRUCTURE){
-		printf("Error type 13 at Line %d: Illegal use of \".\".\n", line);
+		printf("Error type "RED"13"NONE" at Line "RED"%d"NONE": Illegal use of \".\".\n", line);
 		return NULL;
 	}
 	FieldList t = exp1->type->u.structure;
@@ -327,7 +327,7 @@ FieldList checkExpStruct(FieldList exp1, char* name, int line){
 			return t;
 		t = t->next;
 	}
-	printf("Error type 14 at Line %d: Non-existent field \"%s\".\n", line, name);
+	printf("Error type "RED"14"NONE" at Line "RED"%d"NONE": Non-existent field \"%s\".\n", line, name);
 	return NULL;
 }
 
@@ -337,9 +337,9 @@ FieldList checkExpFunc(char* funcName, FieldList parameter, int line){
 	FuncList f = getFuncAddress(funcName);
 	if(!f){
 		if(getSymbol(funcName) || getTypeAddress(funcName, line, 0))
-			printf("Error type 11 at Line %d: \"%s\" is not a function.\n", line, funcName);
+			printf("Error type "RED"11"NONE" at Line "RED"%d"NONE": \"%s\" is not a function.\n", line, funcName);
 		else
-			printf("Error type 2 at Line %d: Undefined function \"%s\".\n", line, funcName);
+			printf("Error type "RED"2"NONE" at Line "RED"%d"NONE": Undefined function \"%s\".\n", line, funcName);
 		return NULL;
 	}
 	else {
@@ -353,14 +353,14 @@ FieldList checkExpFunc(char* funcName, FieldList parameter, int line){
 
 void checkIfType(FieldList f, int line) {
 	if(!f || f->type->kind != BASIC || f->type->u.basic != 0) {
-		printf("Error type 7 at line %d: The value in If or While isn't type int.\n", line);
+		printf("Error type "RED"7"NONE" at line "RED"%d"NONE": The value in If or While isn't type int.\n", line);
 	}
 }
 
 void checkReturnType(Type request, FieldList f) {
 	while(f) {
 		if(typeEqual(request, f->type) == 0) {
-			printf("Error type 8 at Line %d: Type mismatched for return.\n", f->line);
+			printf("Error type "RED"8"NONE" at Line "RED"%d"NONE": Type mismatched for return.\n", f->line);
 		}
 		f = f->next;
 	}
@@ -374,14 +374,14 @@ void Split0(char* string) {
 
 void printStructError() {
 	for(int i = 0;i < errorLength;i++) {
-		printf("Error type 15 at Line %d: Redefined field \"%s\".\n", errorSymbol[i]->line, errorSymbol[i]->name);
+		printf("Error type "RED"15"NONE" at Line "RED"%d"NONE": Redefined field \"%s\".\n", errorSymbol[i]->line, errorSymbol[i]->name);
 	}
 	errorLength = 0;
 }
 
 void printVarError() {
 	for(int i = 0;i < errorLength;i++) {
-		printf("Error type 3 at Line %d: Redefined variable \"%s\".\n", errorSymbol[i]->line, errorSymbol[i]->name);
+		printf("Error type "RED"3"NONE" at Line "RED"%d"NONE": Redefined variable \"%s\".\n", errorSymbol[i]->line, errorSymbol[i]->name);
 	}
 	errorLength = 0;
 }
@@ -389,7 +389,7 @@ void printVarError() {
 void printStructFollowEqualError(FieldList f) {
 	while(f) {
 		if(strcmp(f->isFollowEqual, "true") == 0)
-			printf("Error type 15 at Line %d: field \"%s\" isn't allowed to be assigned.\n", f->line, f->name);
+			printf("Error type "RED"15"NONE" at Line "RED"%d"NONE": field \"%s\" isn't allowed to be assigned.\n", f->line, f->name);
 		f = f->next;
 	}
 }
