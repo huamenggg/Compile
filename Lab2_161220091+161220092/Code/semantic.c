@@ -96,7 +96,8 @@ FieldList generateField(char* name, Type type) {
 
 FieldList insertSymbol(FieldList field, int line, int ifPrint) {
 	FieldList s = getSymbol(field->name);
-	if(s == NULL) {
+	Type t = getTypeAddress(field->name, line, 0);
+	if(s == NULL && t == NULL) {
 		int index = getHashIndex(field->name);
 		s = (FieldList)malloc(sizeof(struct FieldList_));
 		strcpy(s->name, field->name);
@@ -105,7 +106,7 @@ FieldList insertSymbol(FieldList field, int line, int ifPrint) {
 		symbolList[index] = s;
 		return s;
 	}
-	else if(s->status == DECVAR) {
+	else if(s != NULL && s->status == DECVAR) {
 		s->status = field->status;
 		return s;
 	}
@@ -155,6 +156,10 @@ FuncList insertFunc(FuncList Func, int line) {
 		if(checkFuncEqual(f, Func, line, 0) == 1)
 			f->status = Func->status;
 		else
+			printf("Error type "RED"19"NONE" at Line "RED"%d"NONE": Inconsistent declaration of function \"%s\".\n", line, Func->name);
+	}
+	else if(Func->status == DEC) {
+		if(checkFuncEqual(f, Func, line, 0) == 0)
 			printf("Error type "RED"19"NONE" at Line "RED"%d"NONE": Inconsistent declaration of function \"%s\".\n", line, Func->name);
 	}
 	else {
@@ -213,7 +218,7 @@ int checkParameter(char* funcName, FieldList f1, FieldList f2, int line, int ifP
 	while(f1 != NULL && f2 != NULL) {
 		if(typeEqual(f1->type, f2->type) == 0) {
 			if(ifPrint)
-				printf("Error type "RED"7"NONE" at line "RED"%d"NONE": mismatch parameters\n", line);
+				printf("Error type "RED"9"NONE" at line "RED"%d"NONE": mismatch parameters\n", line);
 			return 0;
 		}
 		f1 = f1->next;
@@ -401,4 +406,16 @@ void changeFieldToDec(FieldList f) {
 		f1->status = DECVAR;
 		f = f->next;
 	}
+}
+
+FieldList copyField(FieldList exp) {
+	FieldList f = (FieldList)malloc(sizeof(struct FieldList_));
+	strcpy(f->name, exp->name);
+	strcpy(f->isLeftValue, exp->isLeftValue);
+	strcpy(f->isFollowEqual, exp->isFollowEqual);
+	f->line = exp->line;
+	f->status = exp->status;
+	f->type = exp->type;
+	f->next = NULL;
+	return f;
 }
