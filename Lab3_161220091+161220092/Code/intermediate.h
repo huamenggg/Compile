@@ -13,7 +13,7 @@ struct Operand_ {
 };
 
 struct InterCode_ {
-	enum { ADD, SUB, MUL, DIV, ASSIGN} kind;
+	enum { ADDI, SUBI, MULI, DIVI, ASSIGNI} kind;
 	union {
 		struct { Operand result, op1, op2; } binop;
 		struct { Operand right, left; } assign;

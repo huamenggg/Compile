@@ -13,7 +13,7 @@ Operand GenerateOperand(int kind, int value) {
 
 InterCode GenerateInterCodeAssign(Operand right, Operand left) {
 	InterCode ic = (InterCode)malloc(sizeof(struct InterCode_));
-	ic->kind = ASSIGN;
+	ic->kind = ASSIGNI;
 	ic->u.assign.right = right;
 	ic->u.assign.left = left;
 	return ic;
@@ -54,5 +54,14 @@ int DeleteInterCodes(InterCodes del) {
 }
 
 void writeToFile(FILE *f) {
+	InterCodes out = head->next;
+	while(out != tail) {
+		if(out->code->kind == ASSIGNI) {
+			printf("%d = %d\n", out->code->u.assign.right->u.var_no, out->code->u.assign.left->u.var_no);
+		}
+		else
+			printf("%d = %d %d %d\n", out->code->u.binop.result->u.var_no, out->code->u.binop.op1->u.var_no, out->code->kind, out->code->u.binop.op2->u.var_no);
+		out = out->next;
+	}
 	return;
 }
