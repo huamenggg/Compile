@@ -30,11 +30,17 @@ id ("_"|{letter})+({letter}|{digit}|"_")*
 	return FLOAT; 
 }
 (int)/{blank} {
-	yylval.type_type = typeList[0];
+	SyntaxTypeNode p = (SyntaxTypeNode)malloc(sizeof(struct SyntaxTypeNode_));
+	p->node = NULL;
+	p->type = typeList[0];
+	yylval.type_type = p;
 	return TYPE;
 }
 (float)/{blank} {
-	yylval.type_type = typeList[1];
+	SyntaxTypeNode p = (SyntaxTypeNode)malloc(sizeof(struct SyntaxTypeNode_));
+	p->node = NULL;
+	p->type = typeList[1];
+	yylval.type_type = p;
 	return TYPE;
 }
 "+" {return PLUS;}
@@ -62,7 +68,10 @@ while/({blank}|"(") {return WHILE;}
 {relop} {return RELOP;}
 {id} {
 	//printf("lexi:%s\n", yytext);
-	yylval.type_char = yytext;
+	SyntaxCharNode p = (SyntaxCharNode)malloc(sizeof(struct SyntaxCharNode_));
+	p->node = NULL;
+	p->c = yytext;
+	yylval.type_char = p;
 	return ID;
 }
 "//" {

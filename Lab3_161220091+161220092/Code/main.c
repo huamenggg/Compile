@@ -1,4 +1,3 @@
-#include "stdio.h"
 #include "syntax.tab.h"
 #include "semantic.h"
 #include "intermediate.h"
@@ -123,18 +122,20 @@ void testForList() {
 }
 
 int main(int argc, char** argv) {
-	if(argc <= 2) return 1;
+	FILE *f = fopen(argv[1], "r");
+	/*if(argc <= 2) return 1;
 	FILE *f = fopen(argv[1], "r");
 	FILE *f2 = fopen(argv[2], "w");
        	if(!f || !f2) {
 		perror(argv[1]);
 		return 1;
-	}
+	}*/
 	initSemantic();
 	yyrestart(f);
 	yyparse();
-	InitialInterCodes();
-	writeToFile(f2);
+	printSytaxTree();
+	//InitialInterCodes();
+	//writeToFile(f2);
 //	testResult();
 	return 0;
 }

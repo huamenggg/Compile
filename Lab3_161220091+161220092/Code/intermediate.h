@@ -1,4 +1,4 @@
-#include "semantic.h"
+#include "generateSyntaxTree.h"
 
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;

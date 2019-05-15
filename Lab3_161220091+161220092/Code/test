@@ -1,5 +1,5 @@
+int a;
 int main() {
-	int a;
-	a = read();
-	write(a);
+	float b = 3.44;
+	return a;
 }

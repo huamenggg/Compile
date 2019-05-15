@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include "string.h"
-#include <stdlib.h>
+#include "generateSyntaxTree.h"
 
 #ifndef YST_H
 #define YST_H
@@ -12,6 +10,10 @@
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct FuncList_* FuncList;
+typedef struct SyntaxFieldNode_* SyntaxFieldNode;
+typedef struct SyntaxFuncNode_* SyntaxFuncNode;
+typedef struct SyntaxTypeNode_* SyntaxTypeNode;
+typedef struct SyntaxCharNode_* SyntaxCharNode;
 
 struct Type_
 {
@@ -51,14 +53,38 @@ struct FuncList_
 	int line;
 };
 
+struct SyntaxTypeNode_
+{
+	Type type;
+	Node node;
+};
+
+struct SyntaxFieldNode_
+{
+	FieldList field;
+	Node node;
+};
+
+struct SyntaxFuncNode_
+{
+	FuncList func;
+	Node node;
+};
+
+struct SyntaxCharNode_
+{
+	char* c;
+	Node node;
+};
+
 typedef struct YYSTYPE
 {
 	int type_int;
 	float type_float;
-	char* type_char;
-	Type type_type;
-	FieldList type_field;
-	FuncList type_func;
+	SyntaxCharNode type_char;
+	SyntaxTypeNode type_type;
+	SyntaxFieldNode type_field;
+	SyntaxFuncNode type_func;
 } YYSTYPE;
 
 Type typeList[hashLength];
