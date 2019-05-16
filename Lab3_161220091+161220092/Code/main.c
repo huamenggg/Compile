@@ -103,39 +103,21 @@ void testResult() {
 	}
 }*/
 
-void testForList() {
-	Operand op = GenerateOperand(0, 10);
-	Operand op1 = GenerateOperand(0, 11);
-	InterCode ic = GenerateInterCodeAssign(op, op1);
-	InsertInterCodes(ic);
-	op = GenerateOperand(0, 12);
-	op1 = GenerateOperand(0, 13);
-	Operand op2 = GenerateOperand(0, 14);
-	ic = GenerateInterCodeOp(op2, op, op1, 0);
-	InsertInterCodes(ic);
-	ic = GenerateInterCodeOp(op2, op, op1, 1);
-	InsertInterCodes(ic);
-	ic = GenerateInterCodeOp(op2, op, op1, 2);
-	InsertInterCodes(ic);
-	ic = GenerateInterCodeOp(op2, op, op1, 3);
-	InsertInterCodes(ic);
-}
-
 int main(int argc, char** argv) {
-	FILE *f = fopen(argv[1], "r");
-	/*if(argc <= 2) return 1;
+	//FILE *f = fopen(argv[1], "r");
+	if(argc <= 2) return 1;
 	FILE *f = fopen(argv[1], "r");
 	FILE *f2 = fopen(argv[2], "w");
        	if(!f || !f2) {
 		perror(argv[1]);
 		return 1;
-	}*/
+	}
 	initSemantic();
 	yyrestart(f);
 	yyparse();
-	printSytaxTree();
-	//InitialInterCodes();
-	//writeToFile(f2);
+	InitialInterCodes();
+	generateInterCode();
+	writeToFile(f2);
 //	testResult();
 	return 0;
 }

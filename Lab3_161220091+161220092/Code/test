@@ -1,5 +1,9 @@
-int a;
 int main() {
-	float b = 3.44;
+	int a;
+	int b;
+	int c;
+	a = b;
+	b = 1;
+	c = a;
 	return a;
 }
