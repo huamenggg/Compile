@@ -241,7 +241,11 @@ CompSt	: LC DefList StmtList RC
 StmtList: Stmt StmtList
 	{
 		if($1 == NULL) $1 = $2;
-		else $1->next = $2;
+		else {
+			FieldList f = $1;
+			while(f->next != NULL) f = f->next;
+			f->next = $2;
+		}
 		$$ = $1;
 	}
 	| { $$ = NULL; }
@@ -256,23 +260,27 @@ Stmt	: Exp SEMI
 	}
 	| RETURN Exp SEMI
 	{
-		$$ = generateField("return", $2->type);
-		$$->line = @1.first_line;
+		if($2 != NULL) {
+			$$ = generateField("return", $2->type);
+			$$->line = @1.first_line;
+		}
 	}
 	| IF LP Exp RP Stmt %prec LOWER_THAN_ELSE
 	{
 		checkIfType($3, @1.first_line);
-		$$ = NULL;
+		$$ = $5;
 	}
 	| IF LP Exp RP Stmt ELSE Stmt
 	{
 		checkIfType($3, @1.first_line);
-		$$ = NULL;
+		if($5 == NULL) $5 = $7;
+		else $5->next = $7;
+		$$ = $5;
 	}
 	| WHILE LP Exp RP Stmt
 	{
 		checkIfType($3, @1.first_line);
-		$$ = NULL;
+		$$ = $5;
 	}
 	/*| Comment
 	| error SEMI
@@ -396,11 +404,11 @@ Exp	: Exp ASSIGNOP Exp
 	}
 	| MINUS Exp
 	{
-		//TODO: if need to judge Exp type			
+		$$ = $2;			
 	}
 	| NOT Exp
 	{
-		
+		$$ = $2;
 	}
 	| ID LP Args RP
 	{
@@ -463,7 +471,7 @@ Args	: Exp COMMA Args
 	}
      	| Exp
 	{
-		$$ = $1;	
+		$$ = copyField($1);
 	}
 	;
 %%

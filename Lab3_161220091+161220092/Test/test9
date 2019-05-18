@@ -1,0 +1,12 @@
+struct ab{
+	int temp;
+};
+int func(int i, int a[10])
+{
+	return i;
+}
+int main()
+{
+	int b[10];
+	func(1, b, 2);
+}

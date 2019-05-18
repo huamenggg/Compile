@@ -1,0 +1,9 @@
+int main();
+float test(){
+}
+struct a returnTest(){
+}
+int paratest(int a, float b[10]) {
+}
+float main(){
+}

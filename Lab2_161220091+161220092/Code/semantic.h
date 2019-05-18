@@ -111,4 +111,5 @@ void printStructError();
 void printVarError();
 void printStructFollowEqualError(FieldList f);
 void changeFieldToDec(FieldList f);
+FieldList copyField(FieldList exp);
 #endif
