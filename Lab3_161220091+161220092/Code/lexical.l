@@ -65,7 +65,13 @@ while/({blank}|"(") {return WHILE;}
 ";" {return SEMI;}
 "," {return COMMA;}
 "=" {return ASSIGNOP;}
-{relop} {return RELOP;}
+{relop} {
+	SyntaxCharNode p = (SyntaxCharNode)malloc(sizeof(struct SyntaxCharNode_));
+	p->node = NULL;
+	p->c = yytext;
+	yylval.type_char = p;
+	return RELOP;
+}
 {id} {
 	//printf("lexi:%s\n", yytext);
 	SyntaxCharNode p = (SyntaxCharNode)malloc(sizeof(struct SyntaxCharNode_));

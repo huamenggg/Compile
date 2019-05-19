@@ -1,13 +1,30 @@
 #include "generateSyntaxTree.h"
 
+int IsRelop(char ch) {
+	if(ch == '<' || ch == '>' || ch == '=' || ch == '!') return 1;
+	return 0;
+}
+
+char* RelopFilter(char* string) {
+	int i;
+	for(i = 0;i < strlen(string);i++)
+		if(IsRelop(string[i]) == 0) break;
+	string[i] = '\0';
+	return string;
+}
+
 Node CreateTerminal(char* nameF, enum NodeType typeF,
 		char* content, int numContent, float fn) {
 	Node p = (Node)malloc(sizeof(struct Node_));
 	p->name = nameF;
 	p->nodeType = typeF;
 	p->childNum = 0;
-	if(typeF == TypeN | typeF == Id)
+	if(typeF == TypeN | typeF == Id) {
 		strcpy(p->stringValue, content);
+	}
+	else if(typeF == Terminal && strcmp(nameF, "RELOP") == 0) {
+		strcpy(p->stringValue, RelopFilter(content));
+	}
 	else if(typeF == Number) {
 		if(strcmp(p->name, "INT") == 0) {
 			p->numValue = numContent;

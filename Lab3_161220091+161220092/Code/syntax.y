@@ -664,7 +664,7 @@ Exp	: Exp ASSIGNOP Exp
 		Node child[3];
 		child[0] = $1->node;
 		child[1] = CreateTerminal("RELOP", Terminal,
-				yytext, 0, 0);
+				$2->c, 0, 0);
 		child[2] = $3->node;
 		$$->node = CreateVariable("Exp", 3, child);		
 	}
