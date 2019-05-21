@@ -105,19 +105,20 @@ void testResult() {
 
 int main(int argc, char** argv) {
 	//FILE *f = fopen(argv[1], "r");
-	if(argc <= 2) return 1;
+	//if(argc <= 2) return 1;
 	FILE *f = fopen(argv[1], "r");
 	FILE *f2 = fopen(argv[2], "w");
-       	if(!f || !f2) {
-		perror(argv[1]);
-		return 1;
-	}
+       	//if(!f || !f2) {
+	//	perror(argv[1]);
+	//	return 1;
+	//}
 	initSemantic();
 	yyrestart(f);
 	yyparse();
 	InitialInterCodes();
 	generateInterCode();
 	writeToFile(f2);
+//	printSytaxTree();
 //	testResult();
 	return 0;
 }
