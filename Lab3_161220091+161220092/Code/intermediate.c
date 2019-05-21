@@ -142,35 +142,59 @@ int DeleteInterCodes(InterCodes del) {
 	return 1;
 }
 
-void writeOperand(Operand op) {
-	if(op->kind == VARIABLE)
+void writeOperand(Operand op, FILE* f) {
+	if(op->kind == VARIABLE) {
 		printf("%s", op->u.symbol->name);
-	else if(op->kind == TEMPORLABEL)
+		fprintf(f, "%s", op->u.symbol->name);
+	}
+	else if(op->kind == TEMPORLABEL) {
 		printf("%s", op->u.name);
+		fprintf(f, "%s", op->u.name);
+	}
 	else if(op->kind == BADD || op->kind == BMINUS || op->kind == BSTAR || op->kind == BDIV) {
 		Operand op1 = op->u.bi.a;
 		Operand op2 = op->u.bi.b;
 		printf("%s", op1->u.name);
-		if(op->kind == BADD)
+		fprintf(f, "%s", op1->u.name);
+		if(op->kind == BADD) {
 			printf(" + ");
-		if(op->kind == BMINUS)
+			fprintf(f, " + ");
+		}
+		if(op->kind == BMINUS) {
 			printf(" - ");
-		if(op->kind == BSTAR)
+			fprintf(f, " - ");
+		}
+		if(op->kind == BSTAR) {
 			printf(" * ");
-		if(op->kind == BDIV)
+			fprintf(f, " * ");
+		}
+		if(op->kind == BDIV) {
 			printf(" / ");
+			fprintf(f, " / ");
+		}
 		printf("%s", op2->u.name);
+		fprintf(f, "%s", op2->u.name);
 	}
-	else if(op->kind == CONSTANT)
+	else if(op->kind == CONSTANT) {
 		printf("#%d", op->u.value);
-	else if(op->kind == RE)
+		fprintf(f, "#%d", op->u.value);
+	}
+	else if(op->kind == RE) {
 		printf("%s", op->u.name);
-	else if(op->kind == FUNCTION)
+		fprintf(f, "%s", op->u.name);
+	}
+	else if(op->kind == FUNCTION) {
 		printf("CALL %s", op->u.func->name);
-	else if(op->kind == ARGUMENT || op->kind == WRITE)
+		fprintf(f, "CALL %s", op->u.func->name);
+	}
+	else if(op->kind == ARGUMENT || op->kind == WRITE) {
 		printf("%s", op->u.symbol->name);
-	else 
+		fprintf(f, "%s", op->u.symbol->name);
+	}
+	else {
 		printf("%d", op->u.value);
+		fprintf(f, "%d", op->u.value);
+	}
 }
 
 void writeToFile(FILE *f) {
@@ -182,15 +206,19 @@ void writeToFile(FILE *f) {
 			//TODO print need to be packaged
 			Operand op1 = ic->u.assign.left;
 			Operand op2 = ic->u.assign.right;
-			writeOperand(op1);
+			writeOperand(op1, f);
 			printf(" := ");
-			writeOperand(op2);	
+			fprintf(f, " := ");
+			writeOperand(op2, f);	
 			printf("\n");
+			fprintf(f, "\n");
 		}
 		else if(ic->kind == RETURNI) {
 			printf("RETURN ");
-			writeOperand(ic->u.value);
+			fprintf(f, "RETURN ");
+			writeOperand(ic->u.value, f);
 			printf("\n");
+			fprintf(f, "\n");
 		}
 		else if(ic->kind == COND1) {
 			Operand t1 = ic->u.cond1.t1;
@@ -198,46 +226,61 @@ void writeToFile(FILE *f) {
 			Operand t2 = ic->u.cond1.t2;
 			Operand label = ic->u.cond1.label;
 			printf("IF ");
-			writeOperand(t1);
+			fprintf(f, "IF ");
+			writeOperand(t1, f);
 			printf(" ");
-			writeOperand(op);
+			fprintf(f, " ");
+			writeOperand(op, f);
 			printf(" ");
-			writeOperand(t2);
+			fprintf(f, " ");
+			writeOperand(t2, f);
 			printf(" GOTO ");
-			writeOperand(label);
+			fprintf(f, " GOTO ");
+			writeOperand(label, f);
 			printf("\n");
-
+			fprintf(f, "\n");
 		}
 		else if(ic->kind == GOTO) {
 			printf("GOTO ");
-			writeOperand(ic->u.value);
+			fprintf(f, "GOTO ");
+			writeOperand(ic->u.value, f);
 			printf("\n");
+			fprintf(f, "\n");
 		}
 		else if(ic->kind == LABEL) {
 			printf("LABEL ");
-			writeOperand(ic->u.value);
+			fprintf(f, "LABEL");
+			writeOperand(ic->u.value, f);
 			printf(" :\n");
+			fprintf(f, " :\n");
 		}
 		else if(ic->kind == READI) {
 			printf("READ ");
-			writeOperand(ic->u.value);
+			fprintf(f, "READ ");
+			writeOperand(ic->u.value, f);
 			printf("\n");
+			fprintf(f, "\n");
 		}
 		else if(ic->kind == CALLI) {
 			Operand func = ic->u.call.func;
 			Operand place = ic->u.call.place;
-			writeOperand(place);
+			writeOperand(place, f);
 			printf(" := CALL %s\n", func->u.func->name);
+			fprintf(f, " := CALL %s\n", func->u.func->name);
 		}
 		else if(ic->kind == WRITEI) {
 			printf("WRITE ");
-			writeOperand(ic->u.value);
+			fprintf(f, "WRITE ");
+			writeOperand(ic->u.value, f);
 			printf("\n");
+			fprintf(f, "\n");
 		}
 		else if(ic->kind == ARG) {
 			printf("ARG ");
-			writeOperand(ic->u.value);
+			fprintf(f, "ARG ");
+			writeOperand(ic->u.value, f);
 			printf("\n");
+			fprintf(f, "\n");
 		}
 		out = out->next;
 	}
