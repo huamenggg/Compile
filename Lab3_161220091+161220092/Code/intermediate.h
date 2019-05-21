@@ -5,9 +5,10 @@ typedef struct InterCodes_* InterCodes;
 typedef struct InterCode_* InterCode;
 int labelNum;
 int tempNum;
+int paramNum;
 
-enum OperandKind { VARIABLE, CONSTANT, FUNCTION, ADDRESS, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE };
-enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG };
+enum OperandKind { VARIABLE, CONSTANT, FUNCTION, ADDRESS, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM };
+enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI };
 
 struct Operand_ {
 	enum OperandKind kind;
@@ -25,8 +26,9 @@ struct InterCode_ {
 	union {
 		struct { Operand result, op1, op2; } binop;
 		struct { Operand right, left; } assign;
-		struct { Operand t1, op, t2, label;} cond1;
-		struct { Operand func, place;} call;
+		struct { Operand t1, op, t2, label; } cond1;
+		struct { Operand func, place; } call;
+		struct { Operand op; int size; } dec;
 		Operand value;
 	} u;
 };
@@ -50,6 +52,7 @@ Operand GenerateOperandRELOP(char *c);
 Operand GenerateOperandFunc(FuncList func);
 Operand GenerateOperandArg(FieldList a);
 Operand GenerateOperandWrite(FieldList a);
+Operand GenerateOperandParam(char* c);
 
 /* Operation of InterCode */
 InterCode GenerateInterCodeAssign(Operand right, Operand left);
@@ -59,13 +62,16 @@ InterCode GenerateInterCodeCond1(enum InterCodeKind kind, Operand t1, Operand op
 InterCode GenerateInterCodeReadOrWrite(enum InterCodeKind kind, Operand op);
 InterCode GenerateInterCodeCall(Operand func, Operand place);
 InterCode GenerateInterCodeArg(Operand op);
+InterCode GenerateInterCodeDec(Operand op, int size);
+InterCode GenerateInterCodeParam(Operand op);
+
 
 /* Operation of InterCodes */
 void InitialInterCodes();
 int DeleteInterCodes(InterCodes del);
 
 void writeToFile(FILE *f);
-void writeOperand(Operand op, FILE *f);
+void writeOperand(Operand op, FILE* f);
 
 void generateInterCode();
 
@@ -74,6 +80,7 @@ void new_temp(char* tempName);
 
 void new_label(char* label);
 
+void new_param(char* param);
 /* translate intermedia code */
 InterCodes translate_CompSt(Node node);
 InterCodes translate_Exp(Node node, char* place);
@@ -81,8 +88,18 @@ InterCodes translate_Cond(Node node, char* label1, char* label2);
 InterCodes translate_Program(Node node);
 InterCodes translate_Stmt(Node node);
 InterCodes translate_Args(Node node);
+InterCodes translate_ExtDefList(Node node);
+InterCodes translate_ExtDef(Node node);
+InterCodes translate_ExtDecList(Node node);
+InterCodes translate_VarDec(Node node);
+InterCodes translate_FunDec(Node node);
+InterCodes translate_VarList(Node node);
+InterCodes translate_StmtList(Node node);
+InterCodes translate_DefList(Node node);
+InterCodes translate_Def(Node node);
+InterCodes translate_DecList(Node node);
+InterCodes translate_Dec(Node node);
 InterCodes singleCode(InterCode ic);
-
 
 InterCodes codeAdd(InterCodes a, InterCodes b);
 

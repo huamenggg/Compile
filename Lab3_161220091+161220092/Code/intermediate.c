@@ -59,6 +59,13 @@ Operand GenerateOperandArg(FieldList a) {
 	return op;
 }
 
+Operand GenerateOperandParam(char* name) {
+	Operand op = (Operand)malloc(sizeof(struct Operand_));
+	op->kind = PARAM;
+	strcpy(op->u.name, name);
+	return op;
+}
+
 Operand GenerateOperandWrite(FieldList a) {
 	Operand op = (Operand)malloc(sizeof(struct Operand_));
 	op->kind = WRITE;
@@ -122,6 +129,21 @@ InterCode GenerateInterCodeArg(Operand op) {
 	return ic;
 }
 
+InterCode GenerateInterCodeParam(Operand op) {
+	InterCode ic = (InterCode)malloc(sizeof(struct InterCode_));
+	ic->kind = PARAMI;
+	ic->u.value = op;
+	return ic;
+}
+
+InterCode GenerateInterCodeDec(Operand op, int size) {
+	InterCode ic = (InterCode)malloc(sizeof(struct InterCode_));
+	ic->kind = DECI;
+	ic->u.dec.op = op;
+	ic->u.dec.size = size;
+	return ic;
+}
+
 InterCodes singleCode(InterCode ic) {
 	InterCodes ics = (InterCodes)malloc(sizeof(struct InterCodes_));
 	ics->code = ic;
@@ -133,6 +155,7 @@ InterCodes singleCode(InterCode ic) {
 void InitialInterCodes() {
 	labelNum = 1;
 	tempNum = 1;
+	paramNum = 1;
 }
 
 int DeleteInterCodes(InterCodes del) {
@@ -179,7 +202,7 @@ void writeOperand(Operand op, FILE* f) {
 		printf("#%d", op->u.value);
 		fprintf(f, "#%d", op->u.value);
 	}
-	else if(op->kind == RE) {
+	else if(op->kind == RE || op->kind == PARAM) {
 		printf("%s", op->u.name);
 		fprintf(f, "%s", op->u.name);
 	}
@@ -282,6 +305,20 @@ void writeToFile(FILE *f) {
 			printf("\n");
 			fprintf(f, "\n");
 		}
+		else if(ic->kind == DECI) {
+			printf("DEC ");
+			fprintf(f, "DEC ");
+			writeOperand(ic->u.dec.op, f);
+			printf("\n");
+			fprintf(f, "\n");
+		}
+		else if(ic->kind == PARAMI) {
+			printf("PARAM ");
+			fprintf(f, "PARAM ");
+			writeOperand(ic->u.value, f);
+			printf("\n");
+			fprintf(f, "\n");
+		}
 		out = out->next;
 	}
 	return;
@@ -298,6 +335,7 @@ InterCodes translate_Stmt(Node node) {
 		case 3: { /* Stmt -> RETURN Exp SEMI */
 				char t1[20];
 				new_temp(t1);
+				//TODO fieldlist delete repeat
 				InterCodes code1 = translate_Exp(node->child[1], t1);
 				Operand op = GenerateOperandTemp(t1);
 				InterCode ic = GenerateInterCodeReturnOrLabel(RETURNI, op);	
@@ -305,7 +343,6 @@ InterCodes translate_Stmt(Node node) {
 				return codeAdd(code1, code2);
 			}
 		case 5: {
-				//TODO: distinct if and while
 				if(strcmp(node->child[0]->name, "IF") == 0) {
 					char label1[20];
 					char label2[20];
@@ -463,7 +500,10 @@ InterCodes translate_Cond(Node node, char* label1, char* label2) {
 }
 
 InterCodes translate_CompSt(Node node) {
-	return NULL;
+	InterCodes code1 = translate_DefList(node->child[1]);
+	InterCodes code2 = translate_StmtList(node->child[2]);
+	codeAdd(code1, code2);
+	return code1;
 }
 
 InterCodes translate_Exp(Node node, char* place) {
@@ -668,16 +708,144 @@ InterCodes translate_Args(Node node) {
 	}
 }
 
+InterCodes translate_ExtDefList(Node node) {
+	InterCodes code1 = translate_ExtDef(node->child[0]);
+	InterCodes code2 = translate_ExtDefList(node->child[1]);
+	codeAdd(code1, code2);
+	return code1;
+}
+
+InterCodes translate_ExtDef(Node node) {
+	if(strcmp(node->child[2]->name, "SEMI") == 0)
+		return translate_ExtDecList(node->child[1]);
+	else if(strcmp(node->child[2]->name, "CompSt") == 0) {
+		InterCodes code1 = translate_FunDec(node->child[1]);
+		InterCodes code2 = translate_CompSt(node->child[2]);
+		codeAdd(code1, code2);
+		return code1;
+	}		
+}
+
+InterCodes translate_ExtDecList(Node node) {
+	switch(node->childNum) {
+		case 1: return translate_VarDec(node->child[0]);
+		case 3: {
+				InterCodes code1 = translate_VarDec(node->child[0]);
+				InterCodes code2 = translate_ExtDecList(node->child[2]);
+				codeAdd(code1, code2);
+				return code1;
+			}
+	}
+}
+
+InterCodes translate_VarDec(Node node) {
+	switch(node->childNum) {
+		case 1: 
+		case 4: {
+				InterCodes code1 = translate_VarDec(node->child[0]);
+				char t1[20];
+				new_temp(t1);
+				Operand op = GenerateOperandTemp(t1);
+				int size = 4*(node->child[2]->numValue);
+				InterCode ic = GenerateInterCodeDec(op, size);
+				InterCodes code = singleCode(ic);
+				return code;
+			}
+	}
+}
+
+InterCodes translate_FunDec(Node node) {
+	switch(node->childNum) {
+		case 4: return translate_VarList(node->child[2]);
+	}
+}
+
+InterCodes translate_VarList(Node node) {
+	switch(node->childNum) {
+		case 1: {
+				char p1[20];
+				new_param(p1);
+				Operand op = GenerateOperandParam(p1);
+				InterCode ic = GenerateInterCodeParam(op);
+				InterCodes code = singleCode(ic);
+				return code;
+			}
+		case 3: {
+				FieldList f = getSymbol(node->child[0]->stringValue);
+				//PARAM f
+				char p1[20];
+				new_param(p1);
+				Operand op1 = GenerateOperandParam(p1);
+				InterCode ic1 = GenerateInterCodeParam(op1);
+				InterCodes code1 = singleCode(ic1);
+				InterCodes code2 = translate_VarList(node->child[2]);
+				codeAdd(code1, code2);
+				return code1;
+			}
+	}
+}
+
+InterCodes translate_StmtList(Node node) {
+	if(node != NULL) {
+		//childNum=2
+		InterCodes code1 = translate_Stmt(node->child[0]);
+		InterCodes code2 = translate_StmtList(node->child[1]);
+		codeAdd(code1, code2);
+		return code1;
+	}
+	return NULL;
+}
+
+InterCodes translate_DefList(Node node) {
+	if(node != NULL) {
+		InterCodes code1 = translate_Def(node->child[0]);
+		InterCodes code2 = translate_DefList(node->child[1]);
+		codeAdd(code1, code2);
+		return code1;
+	}
+	return NULL;
+}
+
+InterCodes translate_Def(Node node) {
+	return translate_DecList(node->child[2]);
+}
+
+InterCodes translate_DecList(Node node) {
+	switch(node->childNum) {
+		case 1: return translate_Dec(node->child[0]);
+		case 3: {
+				InterCodes code1 = translate_Dec(node->child[0]);
+				InterCodes code2 = translate_DecList(node->child[1]);
+				codeAdd(code1, code2);
+				return code1;
+			}
+	}
+}
+
+InterCodes translate_Dec(Node node) {
+	switch(node->childNum) {
+		case 1: return translate_VarDec(node->child[0]);
+		case 3: {
+				FieldList f = getSymbol(node->child[0]->stringValue);
+				Operand op1 = GenerateOperandVariable(f);
+				char t1[20];
+				new_temp(t1);
+				Operand op2 = GenerateOperandTemp(t1);
+				InterCodes code1 = translate_Exp(node->child[2], t1);	
+				InterCode ic1 = GenerateInterCodeAssign(op2, op1);
+				InterCodes code2 = singleCode(ic1);
+				codeAdd(code1, code2);
+				return code1;
+			}
+	}
+}
+
 InterCodes translate_Program(Node node) {
 	//TODO need to finish
-	InterCodes c1 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[0]);	
-	InterCodes c2 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[1]->child[0]);	
-	InterCodes c3 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[1]->child[1]->child[0]);	
-	//InterCodes c4 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[1]->child[1]->child[1]->child[0]);
-	//InterCodes c5 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[1]->child[1]->child[1]->child[1]->child[0]);
-	//InterCodes c6 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[1]->child[1]->child[1]->child[1]->child[1]->child[0]);
+	//InterCodes c1 = translate_Stmt(node->child[0]->child[0]->child[2]->child[2]->child[0]);	
 	
-	return codeAdd(c1, codeAdd(c2, c3));//codeAdd(c3, c4)));//codeAdd(c4,codeAdd(c5,c6)))));
+	//return codeAdd(c1, codeAdd(c2, c3));//codeAdd(c3, c4)));//codeAdd(c4,codeAdd(c5,c6)))));
+	return translate_ExtDefList(node->child[0]);
 }
 
 void generateInterCode() {
@@ -697,6 +865,11 @@ void new_temp(char* tempName) {
 void new_label(char* label) {
 	sprintf(label, "label%d", labelNum);
 	labelNum++;
+}
+
+void new_param(char* param) {
+	sprintf(param, "p%d", paramNum);
+	paramNum++;
 }
 
 InterCodes codeAdd(InterCodes a, InterCodes b) {
