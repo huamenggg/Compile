@@ -91,8 +91,10 @@ Type typeList[hashLength];
 FieldList symbolList[hashLength];
 FuncList funcList[hashLength];
 FieldList errorSymbol[hashLength];
+FieldList argList[hashLength];
 int typeLength;
 int errorLength;
+int argLength;
 
 void initSemantic();
 int IsId(char ch);
@@ -111,6 +113,11 @@ Type insertType(Type type, int line);
 Type generateTypeArray(int size);
 Type generateType(char* name, FieldList head);
 FieldList generateField(char* name, Type type);
+
+int addArg(char *name);
+void clearArgList();
+//ArgList generateArg(char* name);
+//ArgList insertArg(ArgList arg);
 
 //function table
 FuncList insertFunc(FuncList Func, int line);

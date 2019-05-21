@@ -29,6 +29,7 @@ void initSemantic() {
 
 	typeLength = 2;
 	errorLength = 0;
+	argLength = 0;
 }
 int IsId(char ch) {
 	if(ch == '_') return 1;
@@ -104,6 +105,18 @@ FieldList generateField(char* name, Type type) {
 	f->type = type;
 	f->next = NULL;
 	return f;
+}
+
+void clearArgList() {
+	argLength = 0;
+	
+}
+
+int addArg(char* name) {
+	FieldList d = generateField(name, NULL);
+	argList[argLength] = d;
+	argLength++;
+	return argLength;
 }
 
 FieldList insertSymbol(FieldList field, int line, int ifPrint) {
