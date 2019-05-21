@@ -7,8 +7,8 @@ int labelNum;
 int tempNum;
 int paramNum;
 
-enum OperandKind { VARIABLE, CONSTANT, FUNCTION, ADDRESS, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM };
-enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI };
+enum OperandKind { VARIABLE, CONSTANT, FUNCTION, ADDRESS, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM, CALL };
+enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI };
 
 struct Operand_ {
 	enum OperandKind kind;
@@ -49,10 +49,11 @@ Operand GenerateOperandFunction(FuncList f);
 Operand GenerateOperandTemp(char* c);
 Operand GenerateOperandBi(enum OperandKind kind, Operand a, Operand b);
 Operand GenerateOperandRELOP(char *c);
-Operand GenerateOperandFunc(FuncList func);
+Operand GenerateOperandCall(FuncList func);
 Operand GenerateOperandArg(FieldList a);
 Operand GenerateOperandWrite(FieldList a);
 Operand GenerateOperandParam(char* c);
+Operand GenerateOperandFunc(char* c);
 
 /* Operation of InterCode */
 InterCode GenerateInterCodeAssign(Operand right, Operand left);
@@ -64,6 +65,7 @@ InterCode GenerateInterCodeCall(Operand func, Operand place);
 InterCode GenerateInterCodeArg(Operand op);
 InterCode GenerateInterCodeDec(Operand op, int size);
 InterCode GenerateInterCodeParam(Operand op);
+InterCode GenerateInterCodeFunc(Operand op);
 
 
 /* Operation of InterCodes */
