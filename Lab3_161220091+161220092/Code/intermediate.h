@@ -65,7 +65,7 @@ void InitialInterCodes();
 int DeleteInterCodes(InterCodes del);
 
 void writeToFile(FILE *f);
-void writeOperand(Operand op);
+void writeOperand(Operand op, FILE *f);
 
 void generateInterCode();
 
