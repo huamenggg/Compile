@@ -692,9 +692,12 @@ InterCodes translate_Exp(Node node, char* place) {
 				if(strcmp(node->child[0]->name, "ID") == 0) {
 					FuncList func1 = getFuncAddress(node->child[0]->stringValue);
 					clearArgList();
-					InterCodes code1 = translate_Args(node->child[2]);
+					char t1[20];
+					new_temp(t1);
+					InterCodes code1 = translate_Args(node->child[2], t1);
 					if(strcmp(func1->name, "write") == 0) {
-						Operand opa1 = GenerateOperandWrite(argList[0]);
+						FieldList field = generateField(t1, NULL);
+						Operand opa1 = GenerateOperandWrite(field);
 						InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
 						InterCodes code2 = singleCode(ic1);
 						codeAdd(code1, code2);
@@ -731,26 +734,24 @@ InterCodes translate_Exp(Node node, char* place) {
 	return NULL;
 }
 
-InterCodes translate_Args(Node node) {
+InterCodes translate_Args(Node node, char* place) {
 	//printf("Args\n");
 	if(node == NULL)
 		return NULL;
 	switch(node->childNum) {
 		case 1: {
-				char t1[20];
-				new_temp(t1);
-				InterCodes code1 = translate_Exp(node->child[0], t1);
-				addArg(t1);	
+				InterCodes code1 = translate_Exp(node->child[0], place);
+				addArg(place);	
 				//arg_list = t1 + arg_list;
 				return code1;
 			}
 		case 3: {
+				InterCodes code1 = translate_Exp(node->child[0], place);
+				addArg(place);
 				char t1[20];
 				new_temp(t1);
-				InterCodes code1 = translate_Exp(node->child[0], t1);
-				addArg(t1);
 				//arg_list = t1 + arg_list;
-				InterCodes code2 = translate_Args(node->child[2]);
+				InterCodes code2 = translate_Args(node->child[2], t1);
 				return codeAdd(code1, code2);
 			}
 	}
@@ -905,7 +906,7 @@ InterCodes translate_DefList(Node node) {
 InterCodes translate_Def(Node node) {
 	//printf("Def\n");
 	if(node != NULL)
-		return translate_DecList(node->child[2]);
+		return translate_DecList(node->child[1]);
 	return NULL;
 }
 
@@ -931,7 +932,7 @@ InterCodes translate_Dec(Node node) {
 	switch(node->childNum) {
 		case 1: return translate_VarDec(node->child[0]);
 		case 3: {
-				FieldList f = getSymbol(node->child[0]->stringValue);
+				FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
 				Operand op1 = GenerateOperandVariable(f);
 				char t1[20];
 				new_temp(t1);

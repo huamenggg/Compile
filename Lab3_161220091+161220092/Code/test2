@@ -1,18 +1,11 @@
-int fact(int n)
-{
-	if (n == 1)
-		return n;
-	else
-		return (n * fact(n - 1));
+int add(int a, int b) {
+	return a + b;
 }
-int main()
-{
-	int m, result;
+int main() {
+	int m;
+	int n;
 	m = read();
-	if (m > 1)
-		result = fact(m);
-	else
-		result = 1;
-	write(result);
+	n = read();
+	write(add(m, n));
 	return 0;
 }

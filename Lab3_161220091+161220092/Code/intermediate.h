@@ -89,7 +89,7 @@ InterCodes translate_Exp(Node node, char* place);
 InterCodes translate_Cond(Node node, char* label1, char* label2);
 InterCodes translate_Program(Node node);
 InterCodes translate_Stmt(Node node);
-InterCodes translate_Args(Node node);
+InterCodes translate_Args(Node node, char* place);
 InterCodes translate_ExtDefList(Node node);
 InterCodes translate_ExtDef(Node node);
 InterCodes translate_ExtDecList(Node node);
