@@ -60,7 +60,7 @@ id ("_"|{letter})+({letter}|{digit}|"_")*
 struct/{blank} {return STRUCT;}
 return/{blank} {return RETURN;}
 if/({blank}|"(") {return IF;}
-else/({blank}|"{") {return ELSE;}
+else/({blank}|"{"|"\n") {return ELSE;}
 while/({blank}|"(") {return WHILE;}
 ";" {return SEMI;}
 "," {return COMMA;}

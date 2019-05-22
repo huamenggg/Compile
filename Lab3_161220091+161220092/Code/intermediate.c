@@ -191,8 +191,7 @@ void writeOperand(Operand op, FILE* f) {
 	else if(op->kind == BADD || op->kind == BMINUS || op->kind == BSTAR || op->kind == BDIV) {
 		Operand op1 = op->u.bi.a;
 		Operand op2 = op->u.bi.b;
-		printf("%s", op1->u.name);
-		fprintf(f, "%s", op1->u.name);
+		writeOperand(op1, f);
 		if(op->kind == BADD) {
 			printf(" + ");
 			fprintf(f, " + ");
@@ -209,8 +208,7 @@ void writeOperand(Operand op, FILE* f) {
 			printf(" / ");
 			fprintf(f, " / ");
 		}
-		printf("%s", op2->u.name);
-		fprintf(f, "%s", op2->u.name);
+		writeOperand(op2, f);
 	}
 	else if(op->kind == CONSTANT) {
 		printf("#%d", op->u.value);
@@ -301,9 +299,13 @@ void writeToFile(FILE *f) {
 		else if(ic->kind == CALLI) {
 			Operand func = ic->u.call.func;
 			Operand place = ic->u.call.place;
-			writeOperand(place, f);
-			printf(" := CALL %s\n", func->u.func->name);
-			fprintf(f, " := CALL %s\n", func->u.func->name);
+			if(place) {
+				writeOperand(place, f);
+				printf(" := ");
+				fprintf(f, " := ");
+			}
+			printf("CALL %s\n", func->u.func->name);
+			fprintf(f, "CALL %s\n", func->u.func->name);
 		}
 		else if(ic->kind == WRITEI) {
 			printf("WRITE ");
@@ -556,28 +558,41 @@ InterCodes translate_Exp(Node node, char* place) {
 				}
 			}
 		case 2: {
-				char label1[20];
-				char label2[20];
-				new_label(label1);
-				new_label(label2);
-				Operand op1 = GenerateOperand(CONSTANT, 0);
-				Operand op2 = GenerateOperandTemp(label1);
-				Operand op3 = GenerateOperandTemp(label2);
-				Operand op4 = GenerateOperand(CONSTANT, 1);
-				InterCode ic1 = GenerateInterCodeAssign(op1, op);
-				InterCode ic2 = GenerateInterCodeReturnOrLabel(LABEL, op2);
-				InterCode ic3 = GenerateInterCodeReturnOrLabel(LABEL, op3);
-				InterCode ic4 = GenerateInterCodeAssign(op4, op);
-				InterCodes code0 = singleCode(ic1);//[place:=0]
-				InterCodes code1 = translate_Cond(node, label1, label2);
-				InterCodes code2 = singleCode(ic2);//label1
-				InterCodes code3 = singleCode(ic3);//label2
-				InterCodes code4 = singleCode(ic4);//[place:=1]
-				codeAdd(code2, code4);
-				codeAdd(code0, code1);
-				codeAdd(code0, code2);
-				codeAdd(code0, code3);
-				return 0;
+				if(strcmp(node->child[0]->name, "MINUS") == 0) {
+					char t1[20];
+					new_temp(t1);
+					InterCodes code1 = translate_Exp(node->child[1], t1);
+					Operand op1 = GenerateOperand(CONSTANT, 0);
+					Operand op2 = GenerateOperandTemp(t1);
+					Operand op3 = op2 = GenerateOperandBi(BMINUS, op1, op2);
+					InterCode ic = GenerateInterCodeAssign(op3, op);
+					InterCodes code2 = singleCode(ic);
+					return codeAdd(code1, code2);
+				}
+				else {
+					char label1[20];
+					char label2[20];
+					new_label(label1);
+					new_label(label2);
+					Operand op1 = GenerateOperand(CONSTANT, 0);
+					Operand op2 = GenerateOperandTemp(label1);
+					Operand op3 = GenerateOperandTemp(label2);
+					Operand op4 = GenerateOperand(CONSTANT, 1);
+					InterCode ic1 = GenerateInterCodeAssign(op1, op);
+					InterCode ic2 = GenerateInterCodeReturnOrLabel(LABEL, op2);
+					InterCode ic3 = GenerateInterCodeReturnOrLabel(LABEL, op3);
+					InterCode ic4 = GenerateInterCodeAssign(op4, op);
+					InterCodes code0 = singleCode(ic1);//[place:=0]
+					InterCodes code1 = translate_Cond(node, label1, label2);
+					InterCodes code2 = singleCode(ic2);//label1
+					InterCodes code3 = singleCode(ic3);//label2
+					InterCodes code4 = singleCode(ic4);//[place:=1]
+					codeAdd(code2, code4);
+					codeAdd(code0, code1);
+					codeAdd(code0, code2);
+					codeAdd(code0, code3);
+					return code0;
+				}
 			}
 		case 3: {
 				if(strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
@@ -668,42 +683,45 @@ InterCodes translate_Exp(Node node, char* place) {
 					InterCodes code2 = singleCode(ic2);
 				       	return code2;
 				}
+				//TODO Exp DOT ID
 			}
 		case 4: {
-				FuncList func1 = getFuncAddress(node->child[0]->stringValue);
-				clearArgList();
-				InterCodes code1 = translate_Args(node->child[2]);
-				if(strcmp(func1->name, "write") == 0) {
-					Operand opa1 = GenerateOperandWrite(argList[0]);
-					InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
-					InterCodes code2 = singleCode(ic1);
+				if(strcmp(node->child[0]->name, "ID") == 0) {
+					FuncList func1 = getFuncAddress(node->child[0]->stringValue);
+					clearArgList();
+					InterCodes code1 = translate_Args(node->child[2]);
+					if(strcmp(func1->name, "write") == 0) {
+						Operand opa1 = GenerateOperandWrite(argList[0]);
+						InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
+						InterCodes code2 = singleCode(ic1);
+						codeAdd(code1, code2);
+						return code1;
+					}
+					if(argLength == 0) {
+						printf("Error in translate_Exp\n");
+						exit(0);
+					}
+					
+					Operand opa2 = GenerateOperandArg(argList[0]);
+					InterCode ic2 = GenerateInterCodeArg(opa2);
+					InterCodes code2 = singleCode(ic2);	
+					if(argLength > 1) {
+						for(int i = 1; i < argLength; i++) {
+							Operand opai = GenerateOperandArg(argList[i]);
+							InterCode ici = GenerateInterCodeArg(opai);
+							InterCodes codei = singleCode(ici);
+							codeAdd(code2, codei);
+						}
+					}
+					Operand func2 = GenerateOperandCall(func1);
+					InterCode ic3 = GenerateInterCodeCall(func2, op);
+					InterCodes code3 = singleCode(ic3);
 					codeAdd(code1, code2);
+					codeAdd(code1, code3);
 					return code1;
 				}
-				if(argLength == 0) {
-					printf("Error in translate_Exp\n");
-					exit(0);
+				else {
 				}
-				
-				Operand opa2 = GenerateOperandArg(argList[0]);
-				InterCode ic2 = GenerateInterCodeArg(opa2);
-				InterCodes code2 = singleCode(ic2);
-				
-				if(argLength > 1) {
-					for(int i = 1; i < argLength; i++) {
-						Operand opai = GenerateOperandArg(argList[i]);
-						InterCode ici = GenerateInterCodeArg(opai);
-						InterCodes codei = singleCode(ici);
-						codeAdd(code2, codei);
-					}
-				}
-				Operand func2 = GenerateOperandCall(func1);
-				InterCode ic3 = GenerateInterCodeCall(func2, op);
-				InterCodes code3 = singleCode(ic2);
-				codeAdd(code1, code2);
-				codeAdd(code1, code3);
-				return code1;
-				
 			}	
 		default: { printf("Error in translate_Exp\n"); exit(0); }
 	}
@@ -947,6 +965,7 @@ void new_temp(char* tempName) {
 
 void new_label(char* label) {
 	sprintf(label, "label%d", labelNum);
+	printf("%d\n", labelNum);
 	labelNum++;
 }
 
