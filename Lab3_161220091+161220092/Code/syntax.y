@@ -108,6 +108,7 @@ ExtDef	: Specifier ExtDecList SEMI
 		$2->func->return_type = $1->type;
 		$2->func->status = DEF;
 		insertFunc($2->func, @1.first_line);
+		printFuncError();
 		checkReturnType($1->type, $3->field);
 		Node child[3];
 		child[0] = $1->node;
@@ -189,7 +190,6 @@ StructSpecifier : STRUCT OptTag LC DefList RC
 			child[4] = CreateTerminal("RC", Terminal,
 					"}", 0, 0);
 			$$->node = CreateVariable("StructSpecifier", 5, child);
-
 		}
 		| STRUCT Tag
 		{
@@ -362,7 +362,7 @@ ParamDec: Specifier VarDec
 		}
 		$$->field = $2->field;
 		Node child[2];
-		child[0] = $2->node;
+		child[0] = $1->node;
 		child[1] = $2->node;
 		$$->node = CreateVariable("ParamDec", 2, child);
 	}

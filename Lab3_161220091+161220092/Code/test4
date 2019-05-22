@@ -1,0 +1,9 @@
+int fact(int a) {
+	return a * a;
+}
+int main() {
+	int m = read();
+	int n = read();
+	write(fact(m) + fact(n));
+	return 0;
+}

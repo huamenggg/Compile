@@ -1,0 +1,11 @@
+int fact(int m, int n) {
+	return m + n;
+}
+int main() {
+	int a;
+	int b;
+	a = read();
+	b = read();
+	write(a + b);
+	return 0;
+}
