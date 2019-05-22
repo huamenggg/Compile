@@ -115,10 +115,10 @@ int main(int argc, char** argv) {
 	initSemantic();
 	yyrestart(f);
 	yyparse();
+	//printSytaxTree();
 	InitialInterCodes();
 	generateInterCode();
 	writeToFile(f2);
-//	printSytaxTree();
 //	testResult();
 	return 0;
 }
