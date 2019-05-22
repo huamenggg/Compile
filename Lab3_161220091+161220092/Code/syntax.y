@@ -362,7 +362,7 @@ ParamDec: Specifier VarDec
 		}
 		$$->field = $2->field;
 		Node child[2];
-		child[0] = $2->node;
+		child[0] = $1->node;
 		child[1] = $2->node;
 		$$->node = CreateVariable("ParamDec", 2, child);
 	}

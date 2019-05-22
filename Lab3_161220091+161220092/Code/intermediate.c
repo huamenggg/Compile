@@ -595,7 +595,10 @@ InterCodes translate_Exp(Node node, char* place) {
 				}
 			}
 		case 3: {
-				if(strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
+				if(strcmp(node->child[0]->name, "LP") == 0) {
+					return translate_Exp(node->child[1], place);
+				}
+				else if(strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
 					// this rule is Exp->Exp = Exp
 					// so node is Exp(left), Exp->child[0] is Exp(right)
 					// but what we need is Exp->ID
@@ -853,19 +856,20 @@ InterCodes translate_VarList(Node node) {
 		return NULL;
 	switch(node->childNum) {
 		case 1: {
-				char p1[20];
-				new_param(p1);
-				Operand op = GenerateOperandParam(p1);
+				if(!node->child[0]->child[1]->child[0]) {
+				//VarList->Parameter->VarDec->ID
+					printf("Error in reduction of VarDec -> ID\n");
+					exit(0);
+				}
+				Operand op = GenerateOperandParam(node->child[0]->child[1]->child[0]->stringValue);
 				InterCode ic = GenerateInterCodeParam(op);
 				InterCodes code = singleCode(ic);
 				return code;
 			}
 		case 3: {
-				FieldList f = getSymbol(node->child[0]->stringValue);
+				//FieldList f = getSymbol(node->child[0]->stringValue);
 				//PARAM f
-				char p1[20];
-				new_param(p1);
-				Operand op1 = GenerateOperandParam(p1);
+				Operand op1 = GenerateOperandParam(node->child[0]->child[1]->child[0]->stringValue);
 				InterCode ic1 = GenerateInterCodeParam(op1);
 				InterCodes code1 = singleCode(ic1);
 				InterCodes code2 = translate_VarList(node->child[2]);
@@ -965,7 +969,6 @@ void new_temp(char* tempName) {
 
 void new_label(char* label) {
 	sprintf(label, "label%d", labelNum);
-	printf("%d\n", labelNum);
 	labelNum++;
 }
 
