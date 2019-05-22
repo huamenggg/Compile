@@ -30,6 +30,7 @@ void initSemantic() {
 	typeLength = 2;
 	errorLength = 0;
 	argLength = 0;
+	errorFuncLength = 0;
 }
 int IsId(char ch) {
 	if(ch == '_') return 1;
@@ -361,15 +362,38 @@ FieldList checkExpStruct(FieldList exp1, char* name, int line){
 	return NULL;
 }
 
+void printFuncError() {
+	int i;
+	for(i = 0;i < errorFuncLength;i++) {
+		FuncList f = getFuncAddress(errorFunc[i]->name);
+		if(!f) {
+			if(getSymbol(errorFunc[i]->name) || getTypeAddress(errorFunc[i]->name, errorFunc[i]->line, 0))
+				printf("Error type "RED"11"NONE" at Line "RED"%d"NONE": \"%s\" is not a function.\n", errorFunc[i]->line, errorFunc[i]->name);
+			else
+				printf("Error type "RED"2"NONE" at Line "RED"%d"NONE": Undefined function \"%s\".\n", errorFunc[i]->line, errorFunc[i]->name);
+		}
+		else {
+			if(checkParameter(errorFunc[i]->name, f->parameters, errorFunc[i]->parameters, errorFunc[i]->line, 1) == 0) {
+				//TODO
+			}
+		}
+	}
+	errorFuncLength = 0;
+}
+
+
 FieldList checkExpFunc(char* funcName, FieldList parameter, int line){
 	if(!funcName)
 		return NULL;
 	FuncList f = getFuncAddress(funcName);
 	if(!f){
-		if(getSymbol(funcName) || getTypeAddress(funcName, line, 0))
-			printf("Error type "RED"11"NONE" at Line "RED"%d"NONE": \"%s\" is not a function.\n", line, funcName);
-		else
-			printf("Error type "RED"2"NONE" at Line "RED"%d"NONE": Undefined function \"%s\".\n", line, funcName);
+		f = (FuncList)malloc(sizeof(struct FuncList_));
+		strcpy(f->name, funcName);
+		f->return_type = NULL;
+		f->parameters = parameter;
+		f->line = line;
+		errorFunc[errorFuncLength] = f;
+		errorFuncLength++;
 		return NULL;
 	}
 	else {

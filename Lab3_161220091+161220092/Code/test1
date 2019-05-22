@@ -1,0 +1,13 @@
+int fact(int m) {
+	int n;
+	fact(n);
+}
+float test() {
+	int a;
+	return a;
+}
+int main() {
+	int b;
+	fact(b);
+	test();
+}

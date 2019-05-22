@@ -286,7 +286,7 @@ void writeToFile(FILE *f) {
 		}
 		else if(ic->kind == LABEL) {
 			printf("LABEL ");
-			fprintf(f, "LABEL");
+			fprintf(f, "LABEL ");
 			writeOperand(ic->u.value, f);
 			printf(" :\n");
 			fprintf(f, " :\n");
@@ -335,6 +335,7 @@ void writeToFile(FILE *f) {
 		}
 		else if(ic->kind == FUNCTIONI) {
 			printf("FUNCTION ");
+			fprintf(f, "FUNCTION ");
 			writeOperand(ic->u.value, f);
 			printf(" :\n");
 			fprintf(f, " :\n");
