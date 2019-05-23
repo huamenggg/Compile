@@ -626,20 +626,33 @@ InterCodes translate_Exp(Node node, char* place) {
 					// but what we need is Exp->ID
 					// we need ID->stringValue
 					// so need node->child[0]->child[0]
-					FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
-					char t1[20];
-					new_temp(t1);
-					InterCodes code1 = translate_Exp(node->child[2], t1);
-					Operand op1 = GenerateOperandVariable(f);
-					Operand op2 = GenerateOperandTemp(t1);
+					InterCodes code1 = NULL;
+					Operand op1;
+					if(node->child[0]->childNum > 1 && strcmp(node->child[0]->child[1]->name, "LB") == 0) {
+						char t1[20];
+						new_temp(t1);
+						code1 = translate_Exp(node->child[0], t1);
+						op1 = GenerateOperandTemp(t1);
+					}
+					else {
+						FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
+						op1 = GenerateOperandVariable(f);
+					}
+					char t2[20];
+					new_temp(t2);
+					InterCodes code2 = translate_Exp(node->child[2], t2);
+					Operand op2 = GenerateOperandTemp(t2);
 					InterCode ic = GenerateInterCodeAssign(op2, op1);
-					InterCodes code2 = singleCode(ic);
+					InterCodes code3 = singleCode(ic);
 					if(op) {
 						InterCode ic1 = GenerateInterCodeAssign(op1, op);
-						InterCodes code3 = singleCode(ic1);
-						code2 =  codeAdd(code2, code3);
+						InterCodes code4 = singleCode(ic1);
+						codeAdd(code3, code4);
 					}
-					return codeAdd(code1, code2);
+					if(code1)
+						return codeAdd(code1, codeAdd(code2, code3));
+					else 
+						return codeAdd(code2, code3);
 				}
 				//TODO need to finish ADD etc.
 				else if(strcmp(node->child[1]->name, "PLUS") == 0 || 
@@ -756,7 +769,28 @@ InterCodes translate_Exp(Node node, char* place) {
 					InterCodes code1 = translate_Exp(node->child[2], t1);
 					char t2[20];
 					new_temp(t2);
-					//Operand op1 = GenerateOperandTemp(
+					Operand op1 = GenerateOperandTemp(t1);
+					Operand op2 = GenerateOperandTemp(t2);
+					Operand op3 = GenerateOperand(CONSTANT, 4);
+					Operand op4 = GenerateOperandBi(BSTAR, op1, op3);
+					InterCode ic1 = GenerateInterCodeAssign(op4, op2);
+					InterCodes code2 = singleCode(ic1);
+					Operand addr = GenerateOperandGetAddress(f);
+					char t3[20];
+					new_temp(t3);
+					Operand op5 = GenerateOperandTemp(t3);
+					Operand op6 = GenerateOperandBi(BADD, addr, op2);
+					InterCode ic2 = GenerateInterCodeAssign(op6, op5);
+					InterCodes code3 = singleCode(ic2);
+					if(op) {
+						/*FieldList f2 = generateField(t3, NULL);
+						Operand value = GenerateOperandGetValue(f2);
+						InterCode ic3 = GenerateInterCodeAssign(value, op);
+						InterCodes code4 = singleCode(ic3);
+						codeAdd(code3, code4);*/
+						sprintf(place, "*%s", t3);
+					}
+					return codeAdd(code1, codeAdd(code2, code3));
 				}
 			}	
 		default: { printf("Error in translate_Exp\n"); exit(0); }
