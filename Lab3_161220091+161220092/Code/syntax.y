@@ -663,8 +663,14 @@ Exp	: Exp ASSIGNOP Exp
 		$$->field = checkExp($1->field, $3->field, "RELOP", @1.first_line);
 		Node child[3];
 		child[0] = $1->node;
-		child[1] = CreateTerminal("RELOP", Terminal,
-				$2->c, 0, 0);
+		if(strcmp($2->c, "")) {
+			child[1] = CreateTerminal("RELOP", Terminal,
+					$2->c, 0, 0);
+		}
+		else {
+			child[1] = CreateTerminal("RELOP", Terminal,
+					relop, 0, 0);
+		}
 		child[2] = $3->node;
 		$$->node = CreateVariable("Exp", 3, child);		
 	}

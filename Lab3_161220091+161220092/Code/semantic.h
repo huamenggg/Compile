@@ -101,6 +101,7 @@ int argLength;
 void initSemantic();
 int IsId(char ch);
 char* Filter(char* string);
+char relop[10];
 
 //hash_pjw
 int getHashIndex(char* string);

@@ -9,6 +9,7 @@
 	yycolumn += yyleng;
  extern char IdString[300];
  extern int errorNum;
+ extern char relop[10];
  #define RED "\033[0;32;31m"
  #define NONE "\033[m"
 %}
@@ -66,6 +67,7 @@ while/({blank}|"(") {return WHILE;}
 "," {return COMMA;}
 "=" {return ASSIGNOP;}
 {relop} {
+	strcpy(relop, yytext);
 	SyntaxCharNode p = (SyntaxCharNode)malloc(sizeof(struct SyntaxCharNode_));
 	p->node = NULL;
 	p->c = yytext;

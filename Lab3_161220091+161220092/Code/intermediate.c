@@ -80,6 +80,20 @@ Operand GenerateOperandFunc(char *c){
 	return op;
 }
 
+Operand GenerateOperandGetAddress(char* c) {
+	Operand op = (Operand)malloc(sizeof(struct Operand_));
+	op->kind = GETADDRESS;
+	strcpy(op->u.name, c);
+	return op;
+}
+
+Operand GenerateOperandGetValue(char* c) {
+	Operand op = (Operand)malloc(sizeof(struct Operand_));
+	op->kind = GETVALUE;
+	strcpy(op->u.name, c);
+	return op;
+}
+
 InterCode GenerateInterCodeAssign(Operand right, Operand left) {
 	InterCode ic = (InterCode)malloc(sizeof(struct InterCode_));
 	ic->kind = ASSIGNI;
@@ -325,8 +339,8 @@ void writeToFile(FILE *f) {
 			printf("DEC ");
 			fprintf(f, "DEC ");
 			writeOperand(ic->u.dec.op, f);
-			printf("\n");
-			fprintf(f, "\n");
+			printf(" %d\n", ic->u.dec.size);
+			fprintf(f, " %d\n", ic->u.dec.size);
 		}
 		else if(ic->kind == PARAMI) {
 			printf("PARAM ");
@@ -726,7 +740,8 @@ InterCodes translate_Exp(Node node, char* place) {
 					codeAdd(code1, code3);
 					return code1;
 				}
-				else {
+				else if(strcmp(node->child[1]->name, "LB") == 0){
+
 				}
 			}	
 		default: { printf("Error in translate_Exp\n"); exit(0); }
