@@ -7,7 +7,7 @@ int labelNum;
 int tempNum;
 int paramNum;
 
-enum OperandKind { VARIABLE, CONSTANT, FUNCTION, ADDRESS, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM, CALL };
+enum OperandKind { VARIABLE, CONSTANT, FUNCTION, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM, CALL, GETADDRESS, GETVALUE};
 enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI };
 
 struct Operand_ {
@@ -54,6 +54,8 @@ Operand GenerateOperandArg(FieldList a);
 Operand GenerateOperandWrite(FieldList a);
 Operand GenerateOperandParam(char* c);
 Operand GenerateOperandFunc(char* c);
+Operand GenerateOperandGetAddress(char* c); //t1 = &t2; this store t2;
+Operand GenerateOperandGetValue(char* c); //t1 = *t2; this store t2;
 
 /* Operation of InterCode */
 InterCode GenerateInterCodeAssign(Operand right, Operand left);
