@@ -80,17 +80,17 @@ Operand GenerateOperandFunc(char *c){
 	return op;
 }
 
-Operand GenerateOperandGetAddress(char* c) {
+Operand GenerateOperandGetAddress(FieldList f) {
 	Operand op = (Operand)malloc(sizeof(struct Operand_));
 	op->kind = GETADDRESS;
-	strcpy(op->u.name, c);
+	op->u.symbol = f;
 	return op;
 }
 
-Operand GenerateOperandGetValue(char* c) {
+Operand GenerateOperandGetValue(FieldList f) {
 	Operand op = (Operand)malloc(sizeof(struct Operand_));
 	op->kind = GETVALUE;
-	strcpy(op->u.name, c);
+	op->u.symbol = f;
 	return op;
 }
 
@@ -239,6 +239,14 @@ void writeOperand(Operand op, FILE* f) {
 	else if(op->kind == ARGUMENT || op->kind == WRITE) {
 		printf("%s", op->u.symbol->name);
 		fprintf(f, "%s", op->u.symbol->name);
+	}
+	else if(op->kind == GETADDRESS) {
+		printf("&%s", op->u.symbol->name);
+		fprintf(f, "&%s", op->u.symbol->name);
+	}
+	else if(op->kind == GETVALUE) {
+		printf("*%s", op->u.symbol->name);
+		fprintf(f, "*%s", op->u.symbol->name);
 	}
 	else {
 		printf("%d", op->u.value);
@@ -741,7 +749,14 @@ InterCodes translate_Exp(Node node, char* place) {
 					return code1;
 				}
 				else if(strcmp(node->child[1]->name, "LB") == 0){
-
+					// don't need to implement mutiple diemnsion array, so node->child[0] must be Exp->ID
+					FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
+					char t1[20];
+					new_temp(t1);
+					InterCodes code1 = translate_Exp(node->child[2], t1);
+					char t2[20];
+					new_temp(t2);
+					//Operand op1 = GenerateOperandTemp(
 				}
 			}	
 		default: { printf("Error in translate_Exp\n"); exit(0); }
