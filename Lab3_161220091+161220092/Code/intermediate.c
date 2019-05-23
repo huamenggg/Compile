@@ -871,6 +871,22 @@ InterCodes translate_ExtDecList(Node node) {
 	return NULL;
 }
 
+int CalcStructSize(FieldList f) {
+	int size = 0;
+	while(f != NULL) {
+		if(f->type->kind == ARRAY) {
+			size += f->type->u.array.size;
+		}
+		else if(f->type->kind == STRUCTURE) {
+			size += CalcStructSize(f->type->u.structure);
+		}
+		else
+			size++;
+		f = f->next;
+	}
+	return size;
+}
+
 InterCodes translate_VarDec(Node node) {
 	//printf("VarDec\n");
 	if(node == NULL)
@@ -885,15 +901,7 @@ InterCodes translate_VarDec(Node node) {
 					FieldList f1 = f->type->u.structure;
 					//if(f1 != NULL)
 					//	printf("!%s\n", f1->name);
-					while(f1 != NULL) {
-						FieldList cur = f1;
-						if(cur->type->kind == ARRAY) {
-							size +=  cur->type->u.array.size;	
-						}
-						else
-							size++;
-						f1 = f1->next;
-					}
+					size = CalcStructSize(f1);
 					size *= 4;
 					InterCode ic = GenerateInterCodeDec(op, size);
 					InterCodes code = singleCode(ic);
