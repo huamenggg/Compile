@@ -41,6 +41,7 @@ struct FieldList_
 	char isFollowEqual[10];
 	int line;
 	enum { DEFVAR, DECVAR } status;
+	enum { NPAVAR, PAVAR } var;
 };
 
 struct FuncList_

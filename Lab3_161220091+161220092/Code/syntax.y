@@ -355,6 +355,7 @@ ParamDec: Specifier VarDec
 			t->u.array.elem = $1->type;
 		}
 		f->status = DEFVAR;
+		f->var = PAVAR;
 		if(insertSymbol(f, @1.first_line, 0) == NULL) {
 			f->line = @1.first_line;
 			errorSymbol[errorLength] = f;

@@ -722,6 +722,9 @@ InterCodes translate_Exp(Node node, char* place) {
 				       	return code2;
 				}
 				//TODO Exp DOT ID
+				else if(strcmp(node->child[1], "DOT") == 0) {
+					
+				}
 			}
 		case 4: {
 				if(strcmp(node->child[0]->name, "ID") == 0) {
@@ -836,12 +839,19 @@ InterCodes translate_ExtDef(Node node) {
 	//printf("ExtDef\n");
 	if(node == NULL)
 		return NULL;
-	if(strcmp(node->child[2]->name, "SEMI") == 0)
-		return translate_ExtDecList(node->child[1]);
-	else if(strcmp(node->child[2]->name, "CompSt") == 0) {
-		InterCodes code1 = translate_FunDec(node->child[1]);
-		InterCodes code2 = translate_CompSt(node->child[2]);
-		return codeAdd(code1, code2);
+	switch(node->childNum) {
+		case 2: {
+				return NULL;
+			}
+		case 3: {
+			if(strcmp(node->child[2]->name, "SEMI") == 0)
+				return translate_ExtDecList(node->child[1]);
+			else if(strcmp(node->child[2]->name, "CompSt") == 0) {
+				InterCodes code1 = translate_FunDec(node->child[1]);
+				InterCodes code2 = translate_CompSt(node->child[2]);
+				return codeAdd(code1, code2);
+			}
+		}
 	}
 	return NULL;
 }
@@ -867,6 +877,28 @@ InterCodes translate_VarDec(Node node) {
 		return NULL;
 	switch(node->childNum) {
 		case 1:	{
+				FieldList f = getSymbol(node->child[0]->stringValue);
+				if(f->type->kind == STRUCTURE) {
+					//printf("VarDec struct\n");
+					Operand op = GenerateOperandVariable(f);
+					int size = 0;
+					FieldList f1 = f->type->u.structure;
+					//if(f1 != NULL)
+					//	printf("!%s\n", f1->name);
+					while(f1 != NULL) {
+						FieldList cur = f1;
+						if(cur->type->kind == ARRAY) {
+							size +=  cur->type->u.array.size;	
+						}
+						else
+							size++;
+						f1 = f1->next;
+					}
+					size *= 4;
+					InterCode ic = GenerateInterCodeDec(op, size);
+					InterCodes code = singleCode(ic);
+					return code;
+				}
 				return NULL;
 			}
 		case 4: {
