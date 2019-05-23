@@ -474,9 +474,7 @@ InterCodes translate_Stmt(Node node) {
 InterCodes translate_Cond(Node node, char* label1, char* label2) {
 	//printf("Cond\n");
 	if(node == NULL)
-		return NULL;
-	new_label(label1);
-	new_label(label2);	
+		return NULL;	
 	Operand opt = GenerateOperandTemp(label1);
 	Operand opf = GenerateOperandTemp(label2);
 	switch(node->childNum) {
@@ -489,10 +487,10 @@ InterCodes translate_Cond(Node node, char* label1, char* label2) {
 					char t2[20];
 					new_temp(t1);
 					new_temp(t2);
-					Operand op1 = GenerateOperandTemp(t1);
-					Operand op2 = GenerateOperandTemp(t2);
 					InterCodes code1 = translate_Exp(node->child[0], t1);
 					InterCodes code2 = translate_Exp(node->child[2], t2);
+					Operand op1 = GenerateOperandTemp(t1);
+					Operand op2 = GenerateOperandTemp(t2);
 					Operand op = GenerateOperandRELOP(node->child[1]->stringValue);
 					InterCode ic1 = GenerateInterCodeCond1(COND1, op1, op, op2, opt);
 					InterCode ic2 = GenerateInterCodeReturnOrLabel(GOTO, opf);	
@@ -722,7 +720,7 @@ InterCodes translate_Exp(Node node, char* place) {
 				       	return code2;
 				}
 				//TODO Exp DOT ID
-				else if(strcmp(node->child[1], "DOT") == 0) {
+				else if(strcmp(node->child[1]->name, "DOT") == 0) {
 					
 				}
 			}
@@ -766,6 +764,10 @@ InterCodes translate_Exp(Node node, char* place) {
 				}
 				else if(strcmp(node->child[1]->name, "LB") == 0){
 					// don't need to implement mutiple diemnsion array, so node->child[0] must be Exp->ID
+					if(strcmp(node->child[0]->child[0]->name, "ID")) {
+						printf("Can't support multiple dimension array.\n");
+						exit(0);
+					}
 					FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
 					char t1[20];
 					new_temp(t1);
@@ -871,6 +873,22 @@ InterCodes translate_ExtDecList(Node node) {
 	return NULL;
 }
 
+int CalcStructSize(FieldList f) {
+	int size = 0;
+	while(f != NULL) {
+		if(f->type->kind == ARRAY) {
+			size += f->type->u.array.size;
+		}
+		else if(f->type->kind == STRUCTURE) {
+			size += CalcStructSize(f->type->u.structure);
+		}
+		else
+			size++;
+		f = f->next;
+	}
+	return size;
+}
+
 InterCodes translate_VarDec(Node node) {
 	//printf("VarDec\n");
 	if(node == NULL)
@@ -885,15 +903,7 @@ InterCodes translate_VarDec(Node node) {
 					FieldList f1 = f->type->u.structure;
 					//if(f1 != NULL)
 					//	printf("!%s\n", f1->name);
-					while(f1 != NULL) {
-						FieldList cur = f1;
-						if(cur->type->kind == ARRAY) {
-							size +=  cur->type->u.array.size;	
-						}
-						else
-							size++;
-						f1 = f1->next;
-					}
+					size = CalcStructSize(f1);
 					size *= 4;
 					InterCode ic = GenerateInterCodeDec(op, size);
 					InterCodes code = singleCode(ic);
@@ -902,10 +912,12 @@ InterCodes translate_VarDec(Node node) {
 				return NULL;
 			}
 		case 4: {
-				InterCodes code1 = translate_VarDec(node->child[0]);
-				char t1[20];
-				new_temp(t1);
-				Operand op = GenerateOperandTemp(t1);
+				if(strcmp(node->child[0]->child[0]->name, "ID")) {
+					printf("Can't support multiple dimention array.\n");
+					exit(0);
+				}
+				FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
+				Operand op = GenerateOperandVariable(f);
 				int size = 4*(node->child[2]->numValue);
 				InterCode ic = GenerateInterCodeDec(op, size);
 				InterCodes code = singleCode(ic);

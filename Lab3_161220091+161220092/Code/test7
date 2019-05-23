@@ -1,0 +1,33 @@
+int main() {
+	int i;
+	int j;
+	int max;
+	int temp;
+	int a[4];
+	i = 0;
+	while(i < 4) {
+		a[i] = read();
+		i = i + 1;
+	}
+	i = 0;
+	while(i < 4) {
+		max = i;
+		j = i;
+		while(j < 4) {
+			if(a[j] > a[max]) max = j;
+			j = j + 1;
+		}
+		if(max != i) {
+			temp = a[i];
+			a[i] = a[max];
+			a[max] = temp;
+		}
+		i = i + 1;
+	}
+	i = 0;
+	while(i < 4) {
+		write(a[i]);
+		i = i + 1;
+	}
+	return 0;
+}

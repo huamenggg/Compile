@@ -107,3 +107,4 @@ InterCodes singleCode(InterCode ic);
 
 InterCodes codeAdd(InterCodes a, InterCodes b);
 
+int CalcStructSize(FieldList f);
