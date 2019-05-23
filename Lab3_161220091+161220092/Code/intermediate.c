@@ -489,10 +489,10 @@ InterCodes translate_Cond(Node node, char* label1, char* label2) {
 					char t2[20];
 					new_temp(t1);
 					new_temp(t2);
-					Operand op1 = GenerateOperandTemp(t1);
-					Operand op2 = GenerateOperandTemp(t2);
 					InterCodes code1 = translate_Exp(node->child[0], t1);
 					InterCodes code2 = translate_Exp(node->child[2], t2);
+					Operand op1 = GenerateOperandTemp(t1);
+					Operand op2 = GenerateOperandTemp(t2);
 					Operand op = GenerateOperandRELOP(node->child[1]->stringValue);
 					InterCode ic1 = GenerateInterCodeCond1(COND1, op1, op, op2, opt);
 					InterCode ic2 = GenerateInterCodeReturnOrLabel(GOTO, opf);	
@@ -870,10 +870,8 @@ InterCodes translate_VarDec(Node node) {
 				return NULL;
 			}
 		case 4: {
-				InterCodes code1 = translate_VarDec(node->child[0]);
-				char t1[20];
-				new_temp(t1);
-				Operand op = GenerateOperandTemp(t1);
+				FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
+				Operand op = GenerateOperandVariable(f);
 				int size = 4*(node->child[2]->numValue);
 				InterCode ic = GenerateInterCodeDec(op, size);
 				InterCodes code = singleCode(ic);
