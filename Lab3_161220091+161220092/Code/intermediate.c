@@ -766,6 +766,10 @@ InterCodes translate_Exp(Node node, char* place) {
 				}
 				else if(strcmp(node->child[1]->name, "LB") == 0){
 					// don't need to implement mutiple diemnsion array, so node->child[0] must be Exp->ID
+					if(strcmp(node->child[0]->child[0]->name, "ID")) {
+						printf("Can't support multiple dimension array.\n");
+						exit(0);
+					}
 					FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
 					char t1[20];
 					new_temp(t1);
@@ -910,6 +914,10 @@ InterCodes translate_VarDec(Node node) {
 				return NULL;
 			}
 		case 4: {
+				if(strcmp(node->child[0]->child[0]->name, "ID")) {
+					printf("Can't support multiple dimention array.\n");
+					exit(0);
+				}
 				FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
 				Operand op = GenerateOperandVariable(f);
 				int size = 4*(node->child[2]->numValue);
