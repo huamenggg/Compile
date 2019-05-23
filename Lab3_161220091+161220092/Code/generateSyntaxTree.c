@@ -15,6 +15,7 @@ char* RelopFilter(char* string) {
 
 Node CreateTerminal(char* nameF, enum NodeType typeF,
 		char* content, int numContent, float fn) {
+	//printf("name:%s content:%s\n", nameF, content);
 	Node p = (Node)malloc(sizeof(struct Node_));
 	p->name = nameF;
 	p->nodeType = typeF;
