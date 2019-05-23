@@ -474,9 +474,7 @@ InterCodes translate_Stmt(Node node) {
 InterCodes translate_Cond(Node node, char* label1, char* label2) {
 	//printf("Cond\n");
 	if(node == NULL)
-		return NULL;
-	new_label(label1);
-	new_label(label2);	
+		return NULL;	
 	Operand opt = GenerateOperandTemp(label1);
 	Operand opf = GenerateOperandTemp(label2);
 	switch(node->childNum) {
