@@ -54,8 +54,8 @@ Operand GenerateOperandArg(FieldList a);
 Operand GenerateOperandWrite(FieldList a);
 Operand GenerateOperandParam(char* c);
 Operand GenerateOperandFunc(char* c);
-Operand GenerateOperandGetAddress(char* c); //t1 = &t2; this store t2;
-Operand GenerateOperandGetValue(char* c); //t1 = *t2; this store t2;
+Operand GenerateOperandGetAddress(FieldList f); //t1 = &t2; this store t2;
+Operand GenerateOperandGetValue(FieldList f); //t1 = *t2; this store t2;
 
 /* Operation of InterCode */
 InterCode GenerateInterCodeAssign(Operand right, Operand left);
