@@ -240,6 +240,14 @@ void writeOperand(Operand op, FILE* f) {
 		printf("%s", op->u.symbol->name);
 		fprintf(f, "%s", op->u.symbol->name);
 	}
+	else if(op->kind == GETADDRESS) {
+		printf("&%s", op->u.value);
+		fprintf(f, "&%s", op->u.value);
+	}
+	else if(op->kind == GETVALUE) {
+		printf("*%s", op->u.value);
+		fprintf(f, "*%s", op->u.value);
+	}
 	else {
 		printf("%d", op->u.value);
 		fprintf(f, "%d", op->u.value);
