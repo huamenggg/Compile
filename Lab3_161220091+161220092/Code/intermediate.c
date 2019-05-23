@@ -722,7 +722,7 @@ InterCodes translate_Exp(Node node, char* place) {
 				       	return code2;
 				}
 				//TODO Exp DOT ID
-				else if(strcmp(node->child[1], "DOT") == 0) {
+				else if(strcmp(node->child[1]->name, "DOT") == 0) {
 					
 				}
 			}
