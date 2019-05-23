@@ -727,6 +727,7 @@ Exp	: Exp ASSIGNOP Exp
 	{
 		SyntaxFieldNode n = (SyntaxFieldNode)malloc(sizeof(struct SyntaxFieldNode_));
 		$$ = n;
+		$$->field = $2->field;
 		Node child[3];
 		child[0] = CreateTerminal("LP", Terminal,
 				"(", 0, 0);
