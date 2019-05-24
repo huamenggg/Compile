@@ -36,7 +36,7 @@
 %left AND
 %left RELOP
 %left PLUS MINUS
-%left START DIV
+%left STAR DIV
 %right NOT
 %left DOT LP RP LB RB
 %nonassoc LOWER_THAN_ELSE

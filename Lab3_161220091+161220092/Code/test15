@@ -1,0 +1,9 @@
+int main()
+{
+	int b, c;
+	int final = 0;
+	b = 1;
+	c = 3;
+	final = c * 3 + b;
+	return 0;
+}
