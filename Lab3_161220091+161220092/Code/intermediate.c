@@ -684,10 +684,12 @@ InterCodes translate_Exp(Node node, char* place) {
 						op3 = GenerateOperandBi(BSTAR, op1, op2);
 					if(strcmp(node->child[1]->name, "DIV") == 0)
 						op3 = GenerateOperandBi(BDIV, op1, op2);
-					InterCode ic1 = GenerateInterCodeAssign(op3, op);
-					InterCodes code3 = singleCode(ic1);
 					codeAdd(code1, code2);
-					codeAdd(code1, code3);
+					if(op) {
+						InterCode ic1 = GenerateInterCodeAssign(op3, op);
+						InterCodes code3 = singleCode(ic1);
+						codeAdd(code1, code3);
+					}
 					return code1;			
 				}
 				else if(strcmp(node->child[1]->name, "RELOP") == 0 
@@ -796,6 +798,7 @@ InterCodes translate_Exp(Node node, char* place) {
 						//FieldList field = generateField(tplace, NULL);
 						
 						Operand opa1 = GenerateOperandWrite(argList[0]);
+						//printf("%s\n", opa1->u.symbol->type->kind);
 						InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
 						InterCodes code2 = singleCode(ic1);
 						codeAdd(code1, code2);
@@ -852,11 +855,6 @@ InterCodes translate_Exp(Node node, char* place) {
 					InterCode ic2 = GenerateInterCodeAssign(op6, op5);
 					InterCodes code3 = singleCode(ic2);
 					if(op) {
-						/*FieldList f2 = generateField(t3, NULL);
-						Operand value = GenerateOperandGetValue(f2);
-						InterCode ic3 = GenerateInterCodeAssign(value, op);
-						InterCodes code4 = singleCode(ic3);
-						codeAdd(code3, code4);*/
 						sprintf(place, "*%s", t3);
 					}
 					return codeAdd(code1, codeAdd(code2, code3));
@@ -876,9 +874,15 @@ InterCodes translate_Args(Node node) {
 				char t1[20];
 				new_temp(t1);
 				InterCodes code1 = translate_Exp(node->child[0], t1);
-				if(node->child[0]->childNum == 1) {//ID not INT
-					FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
-					addArg(t1, f->type);	
+				if(node->child[0]->childNum == 1) {//ID or INT
+					if(strcmp(node->child[0]->child[0]->name, "ID") == 0) {
+						FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
+						addArg(t1, f->type);	
+					}
+					else {
+						FieldList f = getSymbol(node->child[0]->child[0]->numValue);
+						addArg(t1, f->type);
+					}
 				}
 				else
 					addArg(t1, NULL);

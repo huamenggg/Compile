@@ -316,6 +316,7 @@ FieldList checkExp(FieldList exp1, FieldList exp2, char* error, int line){
 			printf("Error type "RED"7"NONE" at Line "RED"%d"NONE": Type mismatched for operands.\n", line);
 			return NULL;
 		}
+		//printf("i'm here:%s in line:%d\n", exp1->name, line);
 		return generateField("relopResult", typeList[0]);
 	}
 }
