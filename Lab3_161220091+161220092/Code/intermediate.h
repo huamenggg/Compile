@@ -87,7 +87,7 @@ void new_label(char* label);
 void new_param(char* param);
 /* translate intermedia code */
 InterCodes translate_CompSt(Node node);
-InterCodes translate_Exp(Node node, char* place);
+InterCodes translate_Exp(Node node, char* place, int ifGetAddress);
 InterCodes translate_Cond(Node node, char* label1, char* label2);
 InterCodes translate_Program(Node node);
 InterCodes translate_Stmt(Node node);
