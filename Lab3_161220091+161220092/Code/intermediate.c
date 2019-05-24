@@ -1115,20 +1115,22 @@ InterCodes translate_DefList(Node node) {
 
 InterCodes translate_Def(Node node) {
 	//printf("Def\n");
-	if(node != NULL)
+	if(node != NULL) {
+		//printf("childNum:%d\n", node->childNum);
 		return translate_DecList(node->child[1]);
+	}
 	return NULL;
 }
 
 InterCodes translate_DecList(Node node) {
-	//printf("DecList\n");
+	//printf("DecList childNum:%d\n", node->childNum);
 	if(node == NULL)
 		return NULL;
 	switch(node->childNum) {
 		case 1: return translate_Dec(node->child[0]);
 		case 3: {
 				InterCodes code1 = translate_Dec(node->child[0]);
-				InterCodes code2 = translate_DecList(node->child[1]);
+				InterCodes code2 = translate_DecList(node->child[2]);
 				codeAdd(code1, code2);
 				return code1;
 			}
@@ -1136,7 +1138,7 @@ InterCodes translate_DecList(Node node) {
 }
 
 InterCodes translate_Dec(Node node) {
-	//printf("Dec\n");
+	//printf("Dec childNum:%d\n", node->childNum);
 	if(node == NULL)
 		return NULL;
 	switch(node->childNum) {
@@ -1174,7 +1176,7 @@ void generateInterCode() {
 }
 
 void new_temp(char* tempName) {
-	sprintf(tempName, "t__%dm", tempNum);
+	sprintf(tempName, "t%d", tempNum);
 	tempNum++;
 }
 
