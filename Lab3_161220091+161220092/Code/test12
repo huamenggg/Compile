@@ -16,9 +16,7 @@ struct Node {
 int main() {
 	struct Node temp;
 	struct Node temp1;
-	temp.a = read();
-	temp.c[0] = read();
-	temp.array.a2[0] = temp.a + temp.c[0];
-	write(temp.array.a2[0]);
+	temp.array.te.t[3] = read();
+	write(temp.array.te.t[3]);
 	return 0;
 }
