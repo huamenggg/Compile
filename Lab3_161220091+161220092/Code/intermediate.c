@@ -845,9 +845,11 @@ InterCodes translate_Exp(Node node, char* place) {
 						exit(0);
 					}
 					Operand addr;
-					InterCodes code0;
+					InterCodes code0 = NULL;
+					//printf("i'm here\n");
 					if(strcmp(node->child[0]->child[0]->name, "ID") == 0) {
 						FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
+						//printf("F->name:%s\n", f->name);
 						addr = GenerateOperandGetAddress(f);
 					}
 					else {
@@ -869,6 +871,7 @@ InterCodes translate_Exp(Node node, char* place) {
 					char t1[20];
 					new_temp(t1);
 					InterCodes code1 = translate_Exp(node->child[2], t1);
+					//printf("i'm alive\n");
 					char t2[20];
 					new_temp(t2);
 					Operand op1 = GenerateOperandTemp(t1);
@@ -883,9 +886,11 @@ InterCodes translate_Exp(Node node, char* place) {
 					Operand op6 = GenerateOperandBi(BADD, addr, op2);
 					InterCode ic2 = GenerateInterCodeAssign(op6, op5);
 					InterCodes code3 = singleCode(ic2);
+					//printf("i'm alive\n");
 					if(op) {
 						sprintf(place, "*%s", t3);
 					}
+					//printf("%x\n", code0);
 					if(code0) return codeAdd(code0, codeAdd(code1, codeAdd(code2, code3)));
 					return codeAdd(code1, codeAdd(code2, code3));
 				}
