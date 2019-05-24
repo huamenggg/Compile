@@ -113,8 +113,8 @@ void clearArgList() {
 	
 }
 
-int addArg(char* name, Type type) {
-	FieldList d = generateField(name, type);
+int addArg(char* name) {
+	FieldList d = generateField(name, NULL);
 	argList[argLength] = d;
 	argLength++;
 	return argLength;
