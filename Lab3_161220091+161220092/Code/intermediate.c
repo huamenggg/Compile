@@ -195,11 +195,11 @@ int DeleteInterCodes(InterCodes del) {
 
 void writeOperand(Operand op, FILE* f) {
 	if(op->kind == VARIABLE) {
-		printf("%s", op->u.symbol->name);
+		//printf("%s", op->u.symbol->name);
 		fprintf(f, "%s", op->u.symbol->name);
 	}
 	else if(op->kind == TEMPORLABEL) {
-		printf("%s", op->u.name);
+		//printf("%s", op->u.name);
 		fprintf(f, "%s", op->u.name);
 	}
 	else if(op->kind == BADD || op->kind == BMINUS || op->kind == BSTAR || op->kind == BDIV) {
@@ -207,49 +207,49 @@ void writeOperand(Operand op, FILE* f) {
 		Operand op2 = op->u.bi.b;
 		writeOperand(op1, f);
 		if(op->kind == BADD) {
-			printf(" + ");
+			//printf(" + ");
 			fprintf(f, " + ");
 		}
 		if(op->kind == BMINUS) {
-			printf(" - ");
+			//printf(" - ");
 			fprintf(f, " - ");
 		}
 		if(op->kind == BSTAR) {
-			printf(" * ");
+			//printf(" * ");
 			fprintf(f, " * ");
 		}
 		if(op->kind == BDIV) {
-			printf(" / ");
+			//printf(" / ");
 			fprintf(f, " / ");
 		}
 		writeOperand(op2, f);
 	}
 	else if(op->kind == CONSTANT) {
-		printf("#%d", op->u.value);
+		//printf("#%d", op->u.value);
 		fprintf(f, "#%d", op->u.value);
 	}
 	else if(op->kind == RE || op->kind == PARAM || op->kind == FUNCTION) {
-		printf("%s", op->u.name);
+		//printf("%s", op->u.name);
 		fprintf(f, "%s", op->u.name);
 	}
 	else if(op->kind == CALL) {
-		printf("CALL %s", op->u.func->name);
+		//printf("CALL %s", op->u.func->name);
 		fprintf(f, "CALL %s", op->u.func->name);
 	}
 	else if(op->kind == ARGUMENT || op->kind == WRITE) {
-		printf("%s", op->u.symbol->name);
+		//printf("%s", op->u.symbol->name);
 		fprintf(f, "%s", op->u.symbol->name);
 	}
 	else if(op->kind == GETADDRESS) {
-		printf("&%s", op->u.symbol->name);
+		//printf("&%s", op->u.symbol->name);
 		fprintf(f, "&%s", op->u.symbol->name);
 	}
 	else if(op->kind == GETVALUE) {
-		printf("*%s", op->u.symbol->name);
+		//printf("*%s", op->u.symbol->name);
 		fprintf(f, "*%s", op->u.symbol->name);
 	}
 	else {
-		printf("%d", op->u.value);
+		//printf("%d", op->u.value);
 		fprintf(f, "%d", op->u.value);
 	}
 }
@@ -264,17 +264,17 @@ void writeToFile(FILE *f) {
 			Operand op1 = ic->u.assign.left;
 			Operand op2 = ic->u.assign.right;
 			writeOperand(op1, f);
-			printf(" := ");
+			//printf(" := ");
 			fprintf(f, " := ");
 			writeOperand(op2, f);	
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == RETURNI) {
-			printf("RETURN ");
+			//printf("RETURN ");
 			fprintf(f, "RETURN ");
 			writeOperand(ic->u.value, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == COND1) {
@@ -282,40 +282,40 @@ void writeToFile(FILE *f) {
 			Operand op = ic->u.cond1.op;
 			Operand t2 = ic->u.cond1.t2;
 			Operand label = ic->u.cond1.label;
-			printf("IF ");
+			//printf("IF ");
 			fprintf(f, "IF ");
 			writeOperand(t1, f);
-			printf(" ");
+			//printf(" ");
 			fprintf(f, " ");
 			writeOperand(op, f);
-			printf(" ");
+			//printf(" ");
 			fprintf(f, " ");
 			writeOperand(t2, f);
-			printf(" GOTO ");
+			//printf(" GOTO ");
 			fprintf(f, " GOTO ");
 			writeOperand(label, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == GOTO) {
-			printf("GOTO ");
+			//printf("GOTO ");
 			fprintf(f, "GOTO ");
 			writeOperand(ic->u.value, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == LABEL) {
-			printf("LABEL ");
+			//printf("LABEL ");
 			fprintf(f, "LABEL ");
 			writeOperand(ic->u.value, f);
-			printf(" :\n");
+			//printf(" :\n");
 			fprintf(f, " :\n");
 		}
 		else if(ic->kind == READI) {
-			printf("READ ");
+			//printf("READ ");
 			fprintf(f, "READ ");
 			writeOperand(ic->u.value, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == CALLI) {
@@ -323,45 +323,45 @@ void writeToFile(FILE *f) {
 			Operand place = ic->u.call.place;
 			if(place) {
 				writeOperand(place, f);
-				printf(" := ");
+				//printf(" := ");
 				fprintf(f, " := ");
 			}
-			printf("CALL %s\n", func->u.func->name);
+			//printf("CALL %s\n", func->u.func->name);
 			fprintf(f, "CALL %s\n", func->u.func->name);
 		}
 		else if(ic->kind == WRITEI) {
-			printf("WRITE ");
+			//printf("WRITE ");
 			fprintf(f, "WRITE ");
 			writeOperand(ic->u.value, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == ARG) {
-			printf("ARG ");
+			//printf("ARG ");
 			fprintf(f, "ARG ");
 			writeOperand(ic->u.value, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == DECI) {
-			printf("DEC ");
+			//printf("DEC ");
 			fprintf(f, "DEC ");
 			writeOperand(ic->u.dec.op, f);
-			printf(" %d\n", ic->u.dec.size);
+			//printf(" %d\n", ic->u.dec.size);
 			fprintf(f, " %d\n", ic->u.dec.size);
 		}
 		else if(ic->kind == PARAMI) {
-			printf("PARAM ");
+			//printf("PARAM ");
 			fprintf(f, "PARAM ");
 			writeOperand(ic->u.value, f);
-			printf("\n");
+			//printf("\n");
 			fprintf(f, "\n");
 		}
 		else if(ic->kind == FUNCTIONI) {
-			printf("FUNCTION ");
+			//printf("FUNCTION ");
 			fprintf(f, "FUNCTION ");
 			writeOperand(ic->u.value, f);
-			printf(" :\n");
+			//printf(" :\n");
 			fprintf(f, " :\n");
 		}
 		out = out->next;
@@ -1176,7 +1176,7 @@ void generateInterCode() {
 }
 
 void new_temp(char* tempName) {
-	sprintf(tempName, "t%d", tempNum);
+	sprintf(tempName, "t__%dm", tempNum);
 	tempNum++;
 }
 
