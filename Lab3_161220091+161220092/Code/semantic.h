@@ -120,6 +120,8 @@ FieldList generateField(char* name, Type type);
 
 int addArg(char *name);
 void clearArgList();
+FieldList copyArgList();
+void resetArgList(FieldList temp);
 //ArgList generateArg(char* name);
 //ArgList insertArg(ArgList arg);
 

@@ -788,17 +788,21 @@ InterCodes translate_Exp(Node node, char* place) {
 		case 4: {
 				if(strcmp(node->child[0]->name, "ID") == 0) {
 					FuncList func1 = getFuncAddress(node->child[0]->stringValue);
+					FieldList tempArgList = copyArgList();
 					clearArgList();
-					InterCodes code1 = translate_Args(node->child[2], func1);
+					char t1[20];
+					new_temp(t1);
+					InterCodes code1 = translate_Args(node->child[2], t1, func1);	
 					if(strcmp(func1->name, "write") == 0) {
 						Operand opa1 = GenerateOperandWrite(argList[0]);
 						InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
 						InterCodes code2 = singleCode(ic1);
 						codeAdd(code1, code2);
+						resetArgList(tempArgList);
 						return code1;
 					}
 					if(argLength == 0) {
-						printf("Error in translate_Exp\n");
+						printf("Error in translate_Exp should contain paramter\n");
 						exit(0);
 					}
 					
@@ -820,6 +824,7 @@ InterCodes translate_Exp(Node node, char* place) {
 					InterCodes code3 = singleCode(ic3);
 					codeAdd(code1, code2);
 					codeAdd(code1, code3);
+					resetArgList(tempArgList);
 					return code1;
 				}
 				else if(strcmp(node->child[1]->name, "LB") == 0){
@@ -858,31 +863,29 @@ InterCodes translate_Exp(Node node, char* place) {
 	return NULL;
 }
 
-InterCodes translate_Args(Node node, FuncList f) {
+InterCodes translate_Args(Node node, char* place, FuncList f) {
 	//printf("Args\n");
 	if(node == NULL)
 		return NULL;
 	switch(node->childNum) {
 		case 1: {
-				char t1[20];
-				new_temp(t1);
-				InterCodes code1 = translate_Exp(node->child[0], t1);
+				InterCodes code1 = translate_Exp(node->child[0], place);
 				if(f->parameters->type->kind == STRUCTURE) {
-					sprintf(t1, "&%s", t1);
+					sprintf(place, "&%s", place);
 				}
-				addArg(t1);
+				addArg(place);
 				return code1;
 			}
 		case 3: {
+				InterCodes code1 = translate_Exp(node->child[0], place);
+				if(f->parameters->type->kind == STRUCTURE) {
+					sprintf(place, "&%s", place);
+				}
+				addArg(place);
+				//arg_list = t1 + arg_list;
 				char t1[20];
 				new_temp(t1);
-				InterCodes code1 = translate_Exp(node->child[0], t1);
-				if(f->parameters->type->kind == STRUCTURE) {
-					sprintf(t1, "&%s", t1);
-				}
-				addArg(t1);
-				//arg_list = t1 + arg_list;
-				InterCodes code2 = translate_Args(node->child[2], f);
+				InterCodes code2 = translate_Args(node->child[2], t1, f);
 				return codeAdd(code1, code2);
 			}
 	}

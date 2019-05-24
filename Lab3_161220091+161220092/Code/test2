@@ -4,8 +4,9 @@ int add(int a, int b) {
 int main() {
 	int m;
 	int n;
+	int c;
 	m = read();
 	n = read();
-	write(add(m, n));
+	write(add(add(m,n), add(m, n)));
 	return 0;
 }
