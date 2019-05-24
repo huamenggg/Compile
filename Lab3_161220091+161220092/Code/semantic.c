@@ -109,8 +109,8 @@ FieldList generateField(char* name, Type type) {
 }
 
 void clearArgList() {
+	int i;
 	argLength = 0;
-	
 }
 
 int addArg(char* name) {
@@ -118,6 +118,29 @@ int addArg(char* name) {
 	argList[argLength] = d;
 	argLength++;
 	return argLength;
+}
+
+void resetArgList(FieldList temp) {
+	argLength = 0;
+	int i;
+	for(i = 0;temp != NULL;i++) {
+		strcpy(argList[i]->name, temp->name);
+		argLength++;
+		temp = temp->next;
+	}
+}
+
+FieldList copyArgList() {
+	int i;
+	if(argLength == 0) return NULL;
+	FieldList head = generateField(argList[0]->name, NULL);
+	FieldList prev = head;
+	for(i = 1;i < argLength;i++) {
+		FieldList f = generateField(argList[i]->name, NULL);
+		prev->next = f;
+		prev = f;
+	}
+	return head;
 }
 
 FieldList insertSymbol(FieldList field, int line, int ifPrint) {

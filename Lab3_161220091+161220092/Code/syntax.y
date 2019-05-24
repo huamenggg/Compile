@@ -872,8 +872,8 @@ Args	: Exp COMMA Args
 	{
 		SyntaxFieldNode n = (SyntaxFieldNode)malloc(sizeof(struct SyntaxFieldNode_));
 		$$ = n;
-		$1->field->next = $3->field;
-		$$->field = $1->field;
+		$$->field = copyField($1->field);
+		$$->field->next = $3->field;
 		Node child[3];
 		child[0] = $1->node;
 		child[1] = CreateTerminal("COMMA", Terminal,
