@@ -236,9 +236,7 @@ void writeOperand(Operand op, FILE* f) {
 		printf("CALL %s", op->u.func->name);
 		fprintf(f, "CALL %s", op->u.func->name);
 	}
-	else if(op->kind == ARGUMENT) {
-		if(op->u.symbol->type != NULL && op->u.symbol->type->kind == STRUCTURE)
-			printf("&");
+	else if(op->kind == ARGUMENT || op->kind == WRITE) {
 		printf("%s", op->u.symbol->name);
 		fprintf(f, "%s", op->u.symbol->name);
 	}
@@ -246,7 +244,7 @@ void writeOperand(Operand op, FILE* f) {
 		printf("&%s", op->u.symbol->name);
 		fprintf(f, "&%s", op->u.symbol->name);
 	}
-	else if(op->kind == GETVALUE || op->kind == WRITE) {
+	else if(op->kind == GETVALUE) {
 		printf("*%s", op->u.symbol->name);
 		fprintf(f, "*%s", op->u.symbol->name);
 	}
@@ -791,14 +789,9 @@ InterCodes translate_Exp(Node node, char* place) {
 				if(strcmp(node->child[0]->name, "ID") == 0) {
 					FuncList func1 = getFuncAddress(node->child[0]->stringValue);
 					clearArgList();
-					char* tplace = place;
-					InterCodes code1 = translate_Args(node->child[2]);
+					InterCodes code1 = translate_Args(node->child[2], func1);
 					if(strcmp(func1->name, "write") == 0) {
-						
-						//FieldList field = generateField(tplace, NULL);
-						
 						Operand opa1 = GenerateOperandWrite(argList[0]);
-						//printf("%s\n", opa1->u.symbol->type->kind);
 						InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
 						InterCodes code2 = singleCode(ic1);
 						codeAdd(code1, code2);
@@ -865,7 +858,7 @@ InterCodes translate_Exp(Node node, char* place) {
 	return NULL;
 }
 
-InterCodes translate_Args(Node node) {
+InterCodes translate_Args(Node node, FuncList f) {
 	//printf("Args\n");
 	if(node == NULL)
 		return NULL;
@@ -874,33 +867,22 @@ InterCodes translate_Args(Node node) {
 				char t1[20];
 				new_temp(t1);
 				InterCodes code1 = translate_Exp(node->child[0], t1);
-				if(node->child[0]->childNum == 1) {//ID or INT
-					if(strcmp(node->child[0]->child[0]->name, "ID") == 0) {
-						FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
-						addArg(t1, f->type);	
-					}
-					else {
-						FieldList f = getSymbol(node->child[0]->child[0]->numValue);
-						addArg(t1, f->type);
-					}
+				if(f->parameters->type->kind == STRUCTURE) {
+					sprintf(t1, "&%s", t1);
 				}
-				else
-					addArg(t1, NULL);
-				//arg_list = t1 + arg_list;
+				addArg(t1);
 				return code1;
 			}
 		case 3: {
 				char t1[20];
 				new_temp(t1);
 				InterCodes code1 = translate_Exp(node->child[0], t1);
-				if(node->child[0]->childNum == 1) {//ID not INT
-					FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
-					addArg(t1, f->type);	
+				if(f->parameters->type->kind == STRUCTURE) {
+					sprintf(t1, "&%s", t1);
 				}
-				else
-					addArg(t1, NULL);
+				addArg(t1);
 				//arg_list = t1 + arg_list;
-				InterCodes code2 = translate_Args(node->child[2]);
+				InterCodes code2 = translate_Args(node->child[2], f);
 				return codeAdd(code1, code2);
 			}
 	}
