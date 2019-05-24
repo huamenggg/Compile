@@ -26,7 +26,7 @@ void initSemantic() {
 	f = generateFunc("write", p, typeList[0]);
 	f->status = DEF;
 	insertFunc(f, 0);
-
+	
 	typeLength = 2;
 	errorLength = 0;
 	argLength = 0;
@@ -113,8 +113,8 @@ void clearArgList() {
 	
 }
 
-int addArg(char* name) {
-	FieldList d = generateField(name, NULL);
+int addArg(char* name, Type type) {
+	FieldList d = generateField(name, type);
 	argList[argLength] = d;
 	argLength++;
 	return argLength;
@@ -128,6 +128,7 @@ FieldList insertSymbol(FieldList field, int line, int ifPrint) {
 		s = (FieldList)malloc(sizeof(struct FieldList_));
 		strcpy(s->name, field->name);
 		s->type = field->type;
+		s->var = field->var;
 		s->next = symbolList[index];
 		symbolList[index] = s;
 		return s;

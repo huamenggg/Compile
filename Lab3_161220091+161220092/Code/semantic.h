@@ -118,7 +118,7 @@ Type generateTypeArray(int size);
 Type generateType(char* name, FieldList head);
 FieldList generateField(char* name, Type type);
 
-int addArg(char *name);
+int addArg(char *name, Type type);
 void clearArgList();
 //ArgList generateArg(char* name);
 //ArgList insertArg(ArgList arg);

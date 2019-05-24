@@ -355,7 +355,10 @@ ParamDec: Specifier VarDec
 			t->u.array.elem = $1->type;
 		}
 		f->status = DEFVAR;
+		//printf("syntax:%s\n", f->name);
 		f->var = PAVAR;
+		
+		//printf("syntax:%d\n", f->var);
 		if(insertSymbol(f, @1.first_line, 0) == NULL) {
 			f->line = @1.first_line;
 			errorSymbol[errorLength] = f;
