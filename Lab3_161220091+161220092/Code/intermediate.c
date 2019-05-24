@@ -55,7 +55,7 @@ Operand GenerateOperandCall(FuncList func) {
 Operand GenerateOperandArg(FieldList a) {
 	Operand op = (Operand)malloc(sizeof(struct Operand_));
 	op->kind = ARGUMENT;
-	op->u.symbol = a;
+	op->u.symbol = generateField(a->name, NULL);
 	return op;
 }
 
@@ -790,9 +790,10 @@ InterCodes translate_Exp(Node node, char* place) {
 					FuncList func1 = getFuncAddress(node->child[0]->stringValue);
 					FieldList tempArgList = copyArgList();
 					clearArgList();
+					//printf("argNum:%d place:%s\n", argLength, place);
 					char t1[20];
 					new_temp(t1);
-					InterCodes code1 = translate_Args(node->child[2], t1, func1);	
+					InterCodes code1 = translate_Args(node->child[2], t1, func1);
 					if(strcmp(func1->name, "write") == 0) {
 						Operand opa1 = GenerateOperandWrite(argList[0]);
 						InterCode ic1 = GenerateInterCodeReadOrWrite(WRITEI, opa1);
@@ -810,7 +811,7 @@ InterCodes translate_Exp(Node node, char* place) {
 					//	printf("%d\n", argList[0]->type->kind);	
 					Operand opa2 = GenerateOperandArg(argList[0]);
 					InterCode ic2 = GenerateInterCodeArg(opa2);
-					InterCodes code2 = singleCode(ic2);	
+					InterCodes code2 = singleCode(ic2);
 					if(argLength > 1) {
 						for(int i = 1; i < argLength; i++) {
 							Operand opai = GenerateOperandArg(argList[i]);
@@ -877,6 +878,7 @@ InterCodes translate_Args(Node node, char* place, FuncList f) {
 				return code1;
 			}
 		case 3: {
+				//printf("I'm translate %s place:%s\n", node->child[0]->child[0]->stringValue, place);
 				InterCodes code1 = translate_Exp(node->child[0], place);
 				if(f->parameters->type->kind == STRUCTURE) {
 					sprintf(place, "&%s", place);
