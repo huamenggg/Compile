@@ -1176,7 +1176,11 @@ void generateInterCode() {
 }
 
 void new_temp(char* tempName) {
+#ifndef DEBUG
 	sprintf(tempName, "t__%dm", tempNum);
+#else
+	sprintf(tempName, "t%d", tempNum);
+#endif
 	tempNum++;
 }
 

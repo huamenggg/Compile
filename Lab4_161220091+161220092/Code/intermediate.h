@@ -1,5 +1,6 @@
 #include "generateSyntaxTree.h"
 
+#define DEBUG
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct InterCode_* InterCode;
