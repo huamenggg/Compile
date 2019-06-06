@@ -1168,7 +1168,12 @@ InterCodes translate_VarDec(Node node) {
 					InterCodes code = singleCode(ic);
 					return code;
 				}
-				return NULL;
+				else {
+					Operand op = GenerateOperandVariable(f);
+					InterCode ic = GenerateInterCodeDec(op, 4);
+					InterCodes code = singleCode(ic);
+					return code;
+				}
 			}
 		case 4: {
 				if(strcmp(node->child[0]->child[0]->name, "ID")) {
@@ -1303,14 +1308,15 @@ InterCodes translate_Dec(Node node) {
 		case 3: {
 				FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
 				Operand op1 = GenerateOperandVariable(f);
+				InterCode icDec = GenerateInterCodeDec(op1, 4);
+				InterCodes codeDec = singleCode(icDec);
 				char t1[20];
 				new_temp(t1);
 				Operand op2 = GenerateOperandTemp(t1);
 				InterCodes code1 = translate_Exp(node->child[2], t1, 0);	
 				InterCode ic1 = GenerateInterCodeAssign(op2, op1);
 				InterCodes code2 = singleCode(ic1);
-				codeAdd(code1, code2);
-				return code1;
+				return codeAdd(codeDec, codeAdd(code1, code2));
 			}
 	}
 }
