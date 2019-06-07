@@ -177,8 +177,8 @@ void InitialInterCodes() {
 	int i;
 	labelNum = 1;
 	tempNum = 1;
-	regNum = 0;
-	for(i = 0;i < 3;i++) {
+	//regNum = 0;
+	for(i = 0;i < regNum;i++) {
 		Reg newReg = (Reg)malloc(sizeof(struct Reg_));
 		regs[i] = newReg;
 		sprintf(regs[i]->name, "$t%d", i);
@@ -283,13 +283,36 @@ void preWrite(FILE *f) {
 }
 
 void getReg(Operand op, char* reg, FILE *f) {
-
-	sprintf(reg, "$t%d", regNum);
-	regNum++;
+	int i;
+	if(op->kind == TEMPORLABEL) {
+		for(i = 0;i < regNum;i++) {
+			if(regs[i]->op && regs[i]->op->kind == TEMPORLABEL && strcmp(regs[i]->op->u.name, op->u.name) == 0) {
+				strcpy(reg, regs[i]->name);
+				regs[i]->status = AVAILABLE;
+				return;
+			}
+		}
+		for(i = 0;i < regNum;i++) {
+			if(regs[i]->status == AVAILABLE) {
+				strcpy(reg, regs[i]->name);
+				regs[i]->status = LOCKED;
+				regs[i]->op = op;
+				return;
+			}
+		}
+	}
+	else if(op->kind == VARIABLE) {
+	}
+	else {
+		sprintf(reg, "TEMP");
+		return;
+	}
 }
 
 void writeToFile(FILE *f) {
+#ifndef INTER
 	preWrite(f);
+#endif
 	InterCodes out = head;
 	while(out != NULL) {
 		InterCode ic = out->code;
@@ -306,6 +329,7 @@ void writeToFile(FILE *f) {
 #else
 			//if op1 is *t1
 			if(op1->kind == TEMPORLABEL && op1->u.name[0] == '*') {
+				//TODO
 				char reg1[5];
 				char reg2[5];
 				getReg(op1, reg1, f);
@@ -454,9 +478,13 @@ void writeToFile(FILE *f) {
 #ifdef INTER
 			if(place) {
 				writeOperand(place, f);
-				printf(" := ");
-				fprintf(f, " := ");
 			}
+			else {
+				printf("temp_return");
+				fprintf(f, "temp_return");
+			}
+			printf(" := ");
+			fprintf(f, " := ");
 			printf("CALL %s\n", func->u.func->name);
 			fprintf(f, "CALL %s\n", func->u.func->name);
 #else
@@ -498,7 +526,10 @@ void writeToFile(FILE *f) {
 			printf(" %d\n", ic->u.dec.size);
 			fprintf(f, " %d\n", ic->u.dec.size);
 #else
-			//TODO: need to finish
+			fprintf(f, "  addi $sp, $sp, -%d\n", ic->u.dec.size);
+			ic->u.dec.op->u.symbol->stackIndex = 
+			//Need to add a divide symbol to distinct different function, for example, we can add a symbol after DefList but before CompSt
+			//And we need to record the sp length	
 #endif
 		}
 		else if(ic->kind == PARAMI) {
@@ -1168,12 +1199,16 @@ InterCodes translate_VarDec(Node node) {
 					InterCodes code = singleCode(ic);
 					return code;
 				}
+#ifdef INTER
+				return NULL;
+#else
 				else {
 					Operand op = GenerateOperandVariable(f);
 					InterCode ic = GenerateInterCodeDec(op, 4);
 					InterCodes code = singleCode(ic);
 					return code;
 				}
+#endif
 			}
 		case 4: {
 				if(strcmp(node->child[0]->child[0]->name, "ID")) {
@@ -1308,15 +1343,19 @@ InterCodes translate_Dec(Node node) {
 		case 3: {
 				FieldList f = getSymbol(node->child[0]->child[0]->stringValue);
 				Operand op1 = GenerateOperandVariable(f);
-				InterCode icDec = GenerateInterCodeDec(op1, 4);
-				InterCodes codeDec = singleCode(icDec);
 				char t1[20];
 				new_temp(t1);
 				Operand op2 = GenerateOperandTemp(t1);
-				InterCodes code1 = translate_Exp(node->child[2], t1, 0);	
+				InterCodes code1 = translate_Exp(node->child[2], t1, 0);
 				InterCode ic1 = GenerateInterCodeAssign(op2, op1);
 				InterCodes code2 = singleCode(ic1);
+#ifdef INTER
+				return codeAdd(code1, code2);
+#else
+				InterCode icDec = GenerateInterCodeDec(op1, 4);
+				InterCodes codeDec = singleCode(icDec);
 				return codeAdd(codeDec, codeAdd(code1, code2));
+#endif
 			}
 	}
 }

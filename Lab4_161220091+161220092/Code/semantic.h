@@ -42,6 +42,7 @@ struct FieldList_
 	int line;
 	enum { DEFVAR, DECVAR } status;
 	enum { NPAVAR, PAVAR } var;
+	int stackIndex;
 };
 
 struct FuncList_

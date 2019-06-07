@@ -2,13 +2,13 @@
 
 #define DEBUG
 //#define INTER
+#define regNum 3
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct InterCode_* InterCode;
 typedef struct Reg_* Reg;
 int labelNum;
 int tempNum;
-int regNum;
 
 enum OperandKind { VARIABLE, CONSTANT, FUNCTION, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM, CALL, GETADDRESS, GETVALUE};
 enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI };
@@ -50,7 +50,7 @@ struct Reg_ {
 
 InterCodes head;
 InterCodes tail;
-Reg regs[3];
+Reg regs[regNum];
 
 /* Operation of Operand */
 Operand GenerateOperand(enum OperandKind kind, int value);
