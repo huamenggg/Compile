@@ -165,6 +165,12 @@ InterCode GenerateInterCodeDec(Operand op, int size) {
 	return ic;
 }
 
+InterCode GenerateInterCodeDivide() {
+	InterCode ic = (InterCode)malloc(sizeof(struct InterCode_));
+	ic->kind = DIVIDE;
+	return ic;
+}
+
 InterCodes singleCode(InterCode ic) {
 	InterCodes ics = (InterCodes)malloc(sizeof(struct InterCodes_));
 	ics->code = ic;
@@ -177,6 +183,7 @@ void InitialInterCodes() {
 	int i;
 	labelNum = 1;
 	tempNum = 1;
+	stackAddress = 0;
 	//regNum = 0;
 	for(i = 0;i < regNum;i++) {
 		Reg newReg = (Reg)malloc(sizeof(struct Reg_));
@@ -282,31 +289,61 @@ void preWrite(FILE *f) {
 	fprintf(f, "  jr $ra\n");
 }
 
-void getReg(Operand op, char* reg, FILE *f) {
+int getReg(Operand op, FILE *f) {
+	/*printf("reg status:");
+	for(int i = 0;i < regNum;i++) {
+		printf("%d ", regs[i]->status);
+	}
+	printf("\n");*/
 	int i;
 	if(op->kind == TEMPORLABEL) {
+		//printf("%s\n", op->u.name);
 		for(i = 0;i < regNum;i++) {
-			if(regs[i]->op && regs[i]->op->kind == TEMPORLABEL && strcmp(regs[i]->op->u.name, op->u.name) == 0) {
-				strcpy(reg, regs[i]->name);
-				regs[i]->status = AVAILABLE;
-				return;
+			if(regs[i]->status == LOCKED && regs[i]->op 
+					&& regs[i]->op->kind == TEMPORLABEL 
+					&& strcmp(regs[i]->op->u.name, op->u.name) == 0) {
+				return i;
 			}
 		}
 		for(i = 0;i < regNum;i++) {
 			if(regs[i]->status == AVAILABLE) {
-				strcpy(reg, regs[i]->name);
 				regs[i]->status = LOCKED;
 				regs[i]->op = op;
-				return;
+				//printf("regs[%d]:%s\n", i, regs[i]->op->u.name);
+				return i;
 			}
 		}
+		printf("No available register error\n");
+		exit(0);
 	}
-	else if(op->kind == VARIABLE) {
+	else if(op->kind == WRITE) {
+		for(i = 0;i < regNum;i++) {
+			//printf("Write:regs[%d]:%s\n", i, regs[i]->op->u.name);
+			if(regs[i]->op && regs[i]->op->kind == TEMPORLABEL && strcmp(regs[i]->op->u.name, op->u.symbol->name) == 0) {
+				return i;
+			}
+		}
+		printf("Error: write undefined temp variable\n");
+		exit(0);
 	}
 	else {
-		sprintf(reg, "TEMP");
-		return;
+		printf("Error in get register\n");
+		exit(0);
 	}
+}
+
+void storeAllReg(FILE *f) {
+	fprintf(f, "  addi $sp, $sp, -%d\n", 4 * regNum);
+	for(int i = 0;i < regNum;i++) {
+		fprintf(f, "  sw %s, %d($sp)\n", regs[i]->name, i * 4);
+	}
+}
+
+void recallAllReg(FILE *f) {
+	for(int i = 0;i < regNum;i++) {
+		fprintf(f, "  lw %s, %d($sp)\n", regs[i]->name, i * 4);
+	}
+	fprintf(f, "  addi $sp, $sp, %d\n", 4 * regNum);
 }
 
 void writeToFile(FILE *f) {
@@ -329,49 +366,144 @@ void writeToFile(FILE *f) {
 #else
 			//if op1 is *t1
 			if(op1->kind == TEMPORLABEL && op1->u.name[0] == '*') {
-				//TODO
-				char reg1[5];
-				char reg2[5];
-				getReg(op1, reg1, f);
-				getReg(op2, reg2, f);
-				fprintf(f, "  sw %s, 0(%s)\n", reg2, reg1);
-				out = out->next;
-				continue;
+				int reg1, reg2, i;
+				if(op2->u.name[0] == '*') {
+					Operand op = GenerateOperandTemp("_temp_1");
+					reg2 = getReg(op, f);
+					for(i = 0;op2->u.name[i] != '\0';i++) {
+						op2->u.name[i] = op2->u.name[i + 1];
+					}
+					int reg3 = getReg(op2, f);
+					fprintf(f, "  lw %s, (%s)\n", regs[reg2]->name, regs[reg3]->name);
+					regs[reg3]->status = AVAILABLE;
+				}
+				else {
+					reg2 = getReg(op2, f);
+				}
+				for(i = 0;op1->u.name[i] != '\0';i++) {
+					op1->u.name[i] = op1->u.name[i + 1];
+				}
+				reg1 = getReg(op1, f);
+				fprintf(f, "  sw %s, (%s)\n", regs[reg2]->name, regs[reg1]->name);
+				regs[reg1]->status = AVAILABLE;
+				regs[reg2]->status = AVAILABLE;
 			}
-			if(op2->kind == CONSTANT) {
-				char reg[5];
-				getReg(op2, reg, f);
-				fprintf(f, "  li %s, %d\n", reg, op2->u.value);
+			else if(op1->kind == VARIABLE) {
+				if(op2->kind != TEMPORLABEL) {
+					printf("Error: variable := not temp\n");
+					exit(0);
+				}
+				int reg2;
+				if(op2->u.name[0] == '*') {
+					Operand op = GenerateOperandTemp("_temp_");
+					reg2 = getReg(op, f);
+					for(int i = 0;op2->u.name[i] != '\0';i++) {
+						op2->u.name[i] = op2->u.name[i + 1];
+					}
+					int reg3 = getReg(op2, f);
+					fprintf(f, "  lw %s, (%s)\n", regs[reg2]->name, regs[reg3]->name);
+					regs[reg3]->status = AVAILABLE;
+				}
+				else {
+					reg2 = getReg(op2, f);
+				}
+				fprintf(f, "  sw %s, %d($sp)\n", regs[reg2]->name, (stackAddress - op1->u.symbol->stackIndex));
+				regs[reg2]->status = AVAILABLE;
 			}
-			else if(op2->kind == VARIABLE || op2->kind == TEMPORLABEL) {
-				char reg1[5];
-				char reg2[5];
-				getReg(op1, reg1, f);
-				getReg(op2, reg2, f);
-				fprintf(f, "  move %s, %s\n", reg1, reg2);
+			else if(op2->kind == CONSTANT) {
+				if(op1->kind != TEMPORLABEL) {
+					printf("Error: not temp := Constant\n");
+					exit(0);
+				}
+				int reg = getReg(op1, f);
+				fprintf(f, "  li %s, %d\n", regs[reg]->name, op2->u.value);
+			}
+			else if(op2->kind == TEMPORLABEL) {
+				if(op1->kind != TEMPORLABEL) {
+					printf("Error: not variable or temp := temp\n");
+					exit(0);
+				}
+				int reg1 = getReg(op1, f);
+				int reg2;
+				if(op2->u.name[0] == '*') {
+					Operand op = GenerateOperandTemp("_temp_");
+					reg2 = getReg(op, f);
+					for(int i = 0;op2->u.name[i] != '\0';i++) {
+						op2->u.name[i] = op2->u.name[i + 1];
+					}
+					int reg3 = getReg(op2, f);
+					fprintf(f, "  lw %s, (%s)\n", regs[reg2]->name, regs[reg3]->name);
+					regs[reg3]->status = AVAILABLE;
+				}
+				else {
+					reg2 = getReg(op2, f);
+				}
+				fprintf(f, "  move %s, %s\n", regs[reg1]->name, regs[reg2]->name);
+				regs[reg2]->status = AVAILABLE;
+			}
+			else if(op2->kind == VARIABLE) {
+				int reg = getReg(op1, f);
+				//printf("op2 variable:stackAddress:%d\n", stackAddress);
+				fprintf(f, "  lw %s, %d($sp)\n", regs[reg]->name, (stackAddress - op2->u.symbol->stackIndex));
 			}
 			else if(op2->kind == BADD || op2->kind == BMINUS || op2->kind == BSTAR || op2->kind == BDIV) {
-				//TODO: in our implementation, the immediate must be firstly added to an temp variable
-				char reg1[5];
-				char reg2[5];
-				char reg3[5];
-				getReg(op1, reg1, f);
-				getReg(op2->u.bi.a, reg2, f);
-				getReg(op2->u.bi.b, reg3, f);
-				//TODO: consider the first operator is GETADDRESS
-				if(op2->kind == BADD)
-					fprintf(f, "  add %s, %s, %s\n", reg1, reg2, reg3);
-				else if(op2->kind == BMINUS)
-					fprintf(f, "  sub %s, %s, %s\n", reg1, reg2, reg3);
-				else if(op2->kind == BSTAR)
-					fprintf(f, "  mul %s, %s, %s\n", reg1, reg2, reg3);
-				else {
-					fprintf(f, "  div %s, %s\n", reg2, reg3);
-					fprintf(f, "  mflo %s\n", reg1);
+				int reg1;
+				int reg2;
+				int reg3;
+				if(op1->kind != TEMPORLABEL) {
+					printf("Error in not temp := a + b\n");
+					exit(0);
 				}
+				reg1 = getReg(op1, f);
+				
+				if(op2->u.bi.b->kind == CONSTANT) {
+					Operand op = GenerateOperandTemp("_temp_");
+					reg3 = getReg(op, f);
+					fprintf(f, "  li %s, %d\n", regs[reg3]->name, op2->u.bi.b->u.value);
+					if(op2->u.bi.a->kind != TEMPORLABEL) {
+						printf("Error: the first operation of +-*/ isn't temp when the second is CONSTANT\n");
+						exit(0);
+					}
+					reg2 = getReg(op2->u.bi.a, f);
+				}
+				else if(op2->u.bi.a->kind == GETADDRESS) {
+					Operand op = GenerateOperandTemp("_temp_");
+					reg2 = getReg(op, f);
+					fprintf(f, "  la %s, %d($sp)\n", regs[reg2]->name, (stackAddress - op2->u.bi.a->u.symbol->stackIndex));
+					if(op2->u.bi.b->kind != TEMPORLABEL) {
+						printf("Error: the second operation of +-*/ isn't temp when the first is ADDRESS\n");
+						exit(0);
+					}
+					reg3 = getReg(op2->u.bi.b, f);
+				}			
+				else if(op2->u.bi.b->kind != TEMPORLABEL || op2->u.bi.a->kind != TEMPORLABEL) {
+					printf("Error: first or second operation of +,-,*,/ isn't temp\n");
+					exit(0);
+				}
+				else {
+					reg2 = getReg(op2->u.bi.a, f);
+					reg3 = getReg(op2->u.bi.b, f);
+				}
+	
+				if(op2->kind == BADD)
+					fprintf(f, "  add %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, regs[reg3]->name);
+				else if(op2->kind == BMINUS)
+					fprintf(f, "  sub %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, regs[reg3]->name);
+				else if(op2->kind == BSTAR)
+					fprintf(f, "  mul %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, regs[reg3]->name);
+				else {
+					fprintf(f, "  div %s, %s\n", regs[reg2]->name, regs[reg3]->name);
+					fprintf(f, "  mflo %s\n", regs[reg1]->name);
+				}
+				regs[reg2]->status = AVAILABLE;
+				regs[reg3]->status = AVAILABLE;
 			}
 			else if(op2->kind == GETADDRESS) {
 				printf("Error: op2->kind shouldn't be GETADDRESS\n");
+				exit(0);
+			}
+			else {
+				printf("Error default\n");
 				exit(0);
 			}
 #endif
@@ -384,10 +516,10 @@ void writeToFile(FILE *f) {
 			printf("\n");
 			fprintf(f, "\n");
 #else
-			char reg[5];
-			getReg(ic->u.value, reg, f);
-			fprintf(f, "  move $v0, %s\n", reg);
+			int reg = getReg(ic->u.value, f);
+			fprintf(f, "  move $v0, %s\n", regs[reg]->name);
 			fprintf(f, "  jr $ra\n");
+			regs[reg]->status = AVAILABLE;
 #endif
 		}
 		else if(ic->kind == COND1) {
@@ -411,28 +543,54 @@ void writeToFile(FILE *f) {
 			printf("\n");
 			fprintf(f, "\n");
 #else
-			char reg1[5];
-			char reg2[5];
-			getReg(t1, reg1, f);
-			getReg(t2, reg2, f);
+			int reg1, reg2;
+			//printf("t1:%s t2:%s\n", t1->u.name, t2->u.name);
+			if(t1->kind == TEMPORLABEL && t1->u.name[0] == '*') {
+				Operand op = GenerateOperandTemp("_temp1_");
+				reg1 = getReg(op, f);
+				for(int i = 0;t1->u.name[i] != '\0';i++) {
+					t1->u.name[i] = t1->u.name[i + 1];
+				}
+				int reg3 = getReg(t1, f);
+				fprintf(f, "  lw %s, (%s)\n", regs[reg1]->name, regs[reg3]->name);
+				regs[reg3]->status = AVAILABLE;
+			}
+			else {
+				reg1 = getReg(t1, f);
+			}
+			if(t2->kind == TEMPORLABEL && t2->u.name[0] == '*') {
+				Operand op = GenerateOperandTemp("_temp2_");
+				reg2 = getReg(op, f);
+				for(int i = 0;t2->u.name[i] != '\0';i++) {
+					t2->u.name[i] = t2->u.name[i + 1];
+				}
+				int reg3 = getReg(t2, f);
+				fprintf(f, "  lw %s, (%s)\n", regs[reg2]->name, regs[reg3]->name);
+				regs[reg3]->status = AVAILABLE;
+			}
+			else {
+				reg2 = getReg(t2, f);
+			}
 			if(strcmp(op->u.name, "==") == 0) {
-				fprintf(f, "  beq %s, %s, %s\n", reg1, reg2, label->u.name);
+				fprintf(f, "  beq %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, label->u.name);
 			}
 			else if(strcmp(op->u.name, "!=") == 0) {
-				fprintf(f, "  bne %s, %s, %s\n", reg1, reg2, label->u.name);
+				fprintf(f, "  bne %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, label->u.name);
 			}
 			else if(strcmp(op->u.name, ">") == 0) {
-				fprintf(f, "  bgt %s, %s, %s\n", reg1, reg2, label->u.name);
+				fprintf(f, "  bgt %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, label->u.name);
 			}
 			else if(strcmp(op->u.name, "<") == 0) {
-				fprintf(f, "  blt %s, %s, %s\n", reg1, reg2, label->u.name);
+				fprintf(f, "  blt %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, label->u.name);
 			}
 			else if(strcmp(op->u.name, ">=") == 0) {
-				fprintf(f, "  bge %s, %s, %s\n", reg1, reg2, label->u.name);
+				fprintf(f, "  bge %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, label->u.name);
 			}
 			else if(strcmp(op->u.name, "<=") == 0) {
-				fprintf(f, "  ble %s, %s, %s\n", reg1, reg2, label->u.name);
+				fprintf(f, "  ble %s, %s, %s\n", regs[reg1]->name, regs[reg2]->name, label->u.name);
 			}
+			regs[reg1]->status = AVAILABLE;
+			regs[reg2]->status = AVAILABLE;
 #endif
 		}
 		else if(ic->kind == GOTO) {
@@ -465,11 +623,15 @@ void writeToFile(FILE *f) {
 			printf("\n");
 			fprintf(f, "\n");
 #else
+			int reg = getReg(ic->u.value, f);
+			//storeAllReg(f);
 			fprintf(f, "  addi $sp, $sp, -4\n");
 			fprintf(f, "  sw $ra, 0($sp)\n");
 			fprintf(f, "  jal read\n");
 			fprintf(f, "  lw $ra, 0($sp)\n");
 			fprintf(f, "  addi $sp, $sp, 4\n");
+			fprintf(f, "  move %s, $v0\n", regs[reg]->name);
+			//recallAllReg(f);
 #endif
 		}
 		else if(ic->kind == CALLI) {
@@ -480,8 +642,8 @@ void writeToFile(FILE *f) {
 				writeOperand(place, f);
 			}
 			else {
-				printf("temp_return");
-				fprintf(f, "temp_return");
+				printf("_temp_return");
+				fprintf(f, "_temp_return");
 			}
 			printf(" := ");
 			fprintf(f, " := ");
@@ -499,11 +661,30 @@ void writeToFile(FILE *f) {
 			printf("\n");
 			fprintf(f, "\n");
 #else
+			int reg;
+			if(ic->u.value->u.symbol->name[0] == '*') {
+				Operand op = GenerateOperandTemp("_temp_");
+				reg = getReg(op, f);
+				int reg1;
+				for(int i = 0;ic->u.value->u.symbol->name[i] != '\0';i++) {
+					ic->u.value->u.symbol->name[i] = ic->u.value->u.symbol->name[i + 1];
+				}
+				reg1 = getReg(ic->u.value, f);
+				fprintf(f, "  lw %s, (%s)\n", regs[reg]->name, regs[reg1]->name);
+				regs[reg1]->status = AVAILABLE;
+			}
+			else {
+				reg = getReg(ic->u.value, f);
+			}
+			fprintf(f, "  move $a0, %s\n", regs[reg]->name);
+			//storeAllReg(f);
 			fprintf(f, "  addi $sp, $sp, -4\n");
 			fprintf(f, "  sw $ra, 0($sp)\n");
 			fprintf(f, "  jal write\n");
 			fprintf(f, "  lw $ra, 0($sp)\n");
 			fprintf(f, "  addi $sp, $sp, 4\n");
+			//recallAllReg(f);
+			regs[reg]->status = AVAILABLE;
 
 #endif
 		}
@@ -527,9 +708,9 @@ void writeToFile(FILE *f) {
 			fprintf(f, " %d\n", ic->u.dec.size);
 #else
 			fprintf(f, "  addi $sp, $sp, -%d\n", ic->u.dec.size);
-			ic->u.dec.op->u.symbol->stackIndex = 
-			//Need to add a divide symbol to distinct different function, for example, we can add a symbol after DefList but before CompSt
-			//And we need to record the sp length	
+			stackAddress += ic->u.dec.size;
+			ic->u.dec.op->u.symbol->stackIndex = stackAddress;
+			//printf("DEC:stackAddress:%d\n", stackAddress);
 #endif
 		}
 		else if(ic->kind == PARAMI) {
@@ -552,6 +733,14 @@ void writeToFile(FILE *f) {
 			fprintf(f, " :\n");
 #else
 			fprintf(f, "\n%s:\n", ic->u.value->u.func->name);
+#endif
+		}
+		else if(ic->kind == DIVIDE) {
+#ifdef INTER
+			printf("DIVIDE\n");
+#else
+			//printf("stack goto 0\n");
+			stackAddress = 0;
 #endif
 		}
 		out = out->next;
@@ -1363,7 +1552,9 @@ InterCodes translate_Dec(Node node) {
 InterCodes translate_Program(Node node) {
 	//printf("Program\n");	
 	InterCodes code = translate_ExtDefList(node->child[0]);
-	return code;
+	InterCode divideCode = GenerateInterCodeDivide();
+	InterCodes code1 = singleCode(divideCode);
+	return codeAdd(code, code1);
 }
 
 void generateInterCode() {

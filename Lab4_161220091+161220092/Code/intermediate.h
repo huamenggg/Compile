@@ -2,16 +2,18 @@
 
 #define DEBUG
 //#define INTER
-#define regNum 3
+#define regNum 9
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct InterCode_* InterCode;
 typedef struct Reg_* Reg;
 int labelNum;
 int tempNum;
+int stackAddress;
+int spLength;
 
 enum OperandKind { VARIABLE, CONSTANT, FUNCTION, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM, CALL, GETADDRESS, GETVALUE};
-enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI };
+enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI, DIVIDE };
 
 struct Operand_ {
 	enum OperandKind kind;
@@ -77,7 +79,7 @@ InterCode GenerateInterCodeArg(Operand op);
 InterCode GenerateInterCodeDec(Operand op, int size);
 InterCode GenerateInterCodeParam(Operand op);
 InterCode GenerateInterCodeFunc(Operand op);
-
+InterCode GenerateInterCodeDivide();
 
 /* Operation of InterCodes */
 void InitialInterCodes();
@@ -119,4 +121,4 @@ InterCodes codeAdd(InterCodes a, InterCodes b);
 int CalcStructSize(FieldList f);
 
 void preWrite(FILE *f);
-void getReg(Operand op, char* reg, FILE *f);
+int getReg(Operand op, FILE *f);
