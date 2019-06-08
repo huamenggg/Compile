@@ -3,6 +3,7 @@
 #define DEBUG
 //#define INTER
 #define regNum 9
+#define argNum 4
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct InterCode_* InterCode;
@@ -13,7 +14,7 @@ int stackAddress;
 int spLength;
 
 enum OperandKind { VARIABLE, CONSTANT, FUNCTION, TEMPORLABEL, BADD, BMINUS, BSTAR, BDIV, RE, ARGUMENT, WRITE, PARAM, CALL, GETADDRESS, GETVALUE};
-enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI, DIVIDE };
+enum InterCodeKind { ADDI, SUBI, MULI, DIVI, ASSIGNI, RETURNI, LABEL, GOTO, COND1, READI, CALLI, WRITEI, ARG, DECI, PARAMI, FUNCTIONI, DIVIDE, ARGCLEAR };
 
 struct Operand_ {
 	enum OperandKind kind;
@@ -53,6 +54,7 @@ struct Reg_ {
 InterCodes head;
 InterCodes tail;
 Reg regs[regNum];
+Reg args[argNum];
 
 /* Operation of Operand */
 Operand GenerateOperand(enum OperandKind kind, int value);
@@ -64,7 +66,7 @@ Operand GenerateOperandRELOP(char *c);
 Operand GenerateOperandCall(FuncList func);
 Operand GenerateOperandArg(FieldList a);
 Operand GenerateOperandWrite(FieldList a);
-Operand GenerateOperandParam(char* c);
+Operand GenerateOperandParam(FieldList f);
 Operand GenerateOperandGetAddress(FieldList f); //t1 = &t2; this store t2;
 Operand GenerateOperandGetValue(FieldList f); //t1 = *t2; this store t2;
 
@@ -80,6 +82,7 @@ InterCode GenerateInterCodeDec(Operand op, int size);
 InterCode GenerateInterCodeParam(Operand op);
 InterCode GenerateInterCodeFunc(Operand op);
 InterCode GenerateInterCodeDivide();
+InterCode GenerateInterCodeArgclear(); 
 
 /* Operation of InterCodes */
 void InitialInterCodes();
