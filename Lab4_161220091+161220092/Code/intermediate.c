@@ -285,7 +285,6 @@ void preWrite(FILE *f) {
 	fprintf(f, ".data\n");
 	fprintf(f, "  _prompt: .asciiz \"Enter an integer:\"\n");
 	fprintf(f, "  _ret: .asciiz \"\\n\"\n\n");
-	//TODO global data need to finish
 	fprintf(f, ".text\n");
 	fprintf(f, "write:\n");
 	fprintf(f, "  li $v0, 1\n");
@@ -681,7 +680,6 @@ void writeToFile(FILE *f) {
 			fprintf(f, "  addi $sp, $sp, -4\n");
 			fprintf(f, "  sw $ra, 0($sp)\n");
 			fprintf(f, "  addi $sp, $sp, -4\n");
-			//TODO: might have error
 			fprintf(f, "  sw $fp, 0($sp)\n");
 			fprintf(f, "  move $fp, $sp\n");
 			fprintf(f, "  jal %s\n", func->u.func->name);
@@ -767,6 +765,7 @@ void writeToFile(FILE *f) {
 					break;
 				}
 			}
+			//TODO: if the arg register isn't enough
 			if(ic->u.value->u.symbol->name[0] == '*') {
 				for(i = 0;ic->u.value->u.symbol->name[i] != '\0';i++) {
 					ic->u.value->u.symbol->name[i] = ic->u.value->u.symbol->name[i + 1];
@@ -829,6 +828,7 @@ void writeToFile(FILE *f) {
 					break;
 				}
 			}
+			//TODO: if arg register isn't enough
 			fprintf(f, "  sw %s, %d($sp)\n", args[arg]->name,
 					(stackAddress - ic->u.value->u.symbol->stackIndex));
 #endif
