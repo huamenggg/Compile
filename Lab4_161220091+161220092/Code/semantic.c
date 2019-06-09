@@ -45,6 +45,15 @@ char* Filter(char* string) {
 	for(i = 0;i < strlen(string);i++)
 		if(IsId(string[i]) == 0) break;
 	string[i] = '\0';
+	if(strcmp(string, "add") == 0 || 
+			strcmp(string, "sub") == 0 || 
+			strcmp(string, "move") == 0 ||
+			strcmp(string, "li") == 0 ||
+			strcmp(string, "la") == 0 ||
+			strcmp(string, "mul") == 0 ||
+			strcmp(string, "div") == 0) {
+		string[i - 1] = '_';
+	}
 	return string;
 }
 
@@ -116,6 +125,7 @@ void clearArgList() {
 int addArg(char* name) {
 	FieldList d = generateField(name, NULL);
 	argList[argLength] = d;
+	//printf("arglist[%d]:%s\n", argLength, name);
 	argLength++;
 	return argLength;
 }

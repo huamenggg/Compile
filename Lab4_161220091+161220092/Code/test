@@ -1,0 +1,8 @@
+int fact(int a, int b, int c, int d, int e) {
+	return a + b - c * d + e;
+}
+int main() {
+	int m = 1, n = 2, x = 3, y = 4, z = 5;
+	write(fact(m, n, x, y, z));
+	return 0;
+}
