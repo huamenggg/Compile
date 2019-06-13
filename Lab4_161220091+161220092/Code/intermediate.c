@@ -663,6 +663,8 @@ void writeToFile(FILE *f) {
 		else if(ic->kind == CALLI) {
 			Operand func = ic->u.call.func;
 			Operand place = ic->u.call.place;
+			//printf("%s\n", func->u.func->name);
+			
 #ifdef INTER
 			if(place) {
 				writeOperand(place, f);
@@ -689,6 +691,17 @@ void writeToFile(FILE *f) {
 			fprintf(f, "  lw $ra, 0($sp)\n");
 			fprintf(f, "  addi $sp, $sp, 4\n");
 			recallAllReg(f);
+			
+			FieldList ff = func->u.func->parameters;
+			argCount = 0;
+			while(ff) {
+				argCount++;
+				ff = ff->next;
+			}
+			if(argCount > 4) {
+				argCount -= 4;
+				fprintf(f, "  addi $sp, $sp, %d\n", argCount*4);
+			}
 			if(place) {
 				if(place->kind != TEMPORLABEL) {
 					printf("Error: not temp := CALL function\n");
@@ -757,6 +770,7 @@ void writeToFile(FILE *f) {
 			fprintf(f, "\n");
 #else
 			int i, arg;
+			int overarg = 0;
 			for(i = 0;i < argNum;i++) {
 				if(args[i]->status == AVAILABLE) {
 					//printf("args:%d locked\n", i);
@@ -765,6 +779,9 @@ void writeToFile(FILE *f) {
 					break;
 				}
 			}
+			//printf("%d %d\n",i,argNum);
+			if(i == argNum)
+				overarg = 1;
 			//TODO: if the arg register isn't enough
 			if(ic->u.value->u.symbol->name[0] == '*') {
 				for(i = 0;ic->u.value->u.symbol->name[i] != '\0';i++) {
@@ -775,13 +792,28 @@ void writeToFile(FILE *f) {
 				int regtemp = getReg(op, f);
 				fprintf(f, "  lw %s, (%s)\n", regs[regtemp]->name, regs[reg]->name);
 				regs[reg]->status = AVAILABLE;
-				fprintf(f, "  move %s, %s\n", args[arg]->name, regs[regtemp]->name);
+				//TODO not enough
+				if(overarg == 0) {
+					fprintf(f, "  move %s, %s\n", args[arg]->name, regs[regtemp]->name);
+				}
+				else {
+					fprintf(f, "  addi $sp, $sp, -4\n");
+					fprintf(f, "  sw %s, 0($sp)\n", regs[regtemp]->name);
+					
+				}
 				regs[regtemp]->status = AVAILABLE;
 			}
 			else {
 				int reg = getReg(ic->u.value, f);
-				fprintf(f, "  move %s, %s\n", args[arg]->name, regs[reg]->name);
+				if(overarg == 0)
+					fprintf(f, "  move %s, %s\n", args[arg]->name, regs[reg]->name);
+				else {
+					fprintf(f, "  addi $sp, $sp, -4\n");
+					fprintf(f, "  sw %s, 0($sp)\n", regs[reg]->name);
+					
+				}
 				regs[reg]->status = AVAILABLE;
+
 			}
 			/*printf("ARG:");
 			for(i = 0;i < argNum;i++) {
@@ -829,8 +861,18 @@ void writeToFile(FILE *f) {
 				}
 			}
 			//TODO: if arg register isn't enough
-			fprintf(f, "  sw %s, %d($sp)\n", args[arg]->name,
-					(stackAddress - ic->u.value->u.symbol->stackIndex));
+			if(i < argNum) {	
+				//fprintf(f, "  %d %d\n", i, argNum);
+				fprintf(f, "  sw %s, 0($sp)\n", args[arg]->name);
+			}
+			else {
+				int offpa = stackAddress - 20;
+				Operand op = GenerateOperandTemp("_temp_");
+				int regtemp = getReg(op, f);
+				fprintf(f, "  lw %s, %d($fp)\n", regs[regtemp]->name, 44 + offpa);
+				fprintf(f, "  sw %s, 0($sp)\n", regs[regtemp]->name);
+				regs[regtemp]->status = AVAILABLE;
+			}
 #endif
 		}
 		else if(ic->kind == FUNCTIONI) {
@@ -887,6 +929,10 @@ InterCodes translate_Stmt(Node node) {
 				Operand op = GenerateOperandTemp(t1);
 				InterCode ic = GenerateInterCodeReturnOrLabel(RETURNI, op);	
 				InterCodes code2 = singleCode(ic);
+				//InterCodes code1 = translate_Exp(node->child[1], t1, 0);
+				//Operand op = GenerateOperandTemp(t1);
+				//InterCode ic = GenerateInterCodeReturnOrLabel(RETURNI, op);	
+				//InterCodes code2 = singleCode(ic);
 				return codeAdd(code1, code2);
 				/*InterCode divideCode = GenerateInterCodeDivide();
 				InterCodes code3 = singleCode(divideCode);
