@@ -1,6 +1,6 @@
 #include "generateSyntaxTree.h"
 
-#define DEBUG
+//#define DEBUG
 //#define INTER
 #define regNum 9
 #define argNum 4
@@ -38,6 +38,7 @@ struct InterCode_ {
 		struct { Operand op; int size; } dec;
 		Operand value;
 	} u;
+	enum {LIVE, DEAD} status;
 };
 
 struct InterCodes_ {
