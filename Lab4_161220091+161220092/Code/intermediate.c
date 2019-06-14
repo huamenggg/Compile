@@ -797,9 +797,9 @@ void writeToFile(FILE *f) {
 					fprintf(f, "  move %s, %s\n", args[arg]->name, regs[regtemp]->name);
 				}
 				else {
+					//printf(">>>\n");
 					fprintf(f, "  addi $sp, $sp, -4\n");
 					fprintf(f, "  sw %s, 0($sp)\n", regs[regtemp]->name);
-					
 				}
 				regs[regtemp]->status = AVAILABLE;
 			}
@@ -808,9 +808,9 @@ void writeToFile(FILE *f) {
 				if(overarg == 0)
 					fprintf(f, "  move %s, %s\n", args[arg]->name, regs[reg]->name);
 				else {
+					//printf("???\n");
 					fprintf(f, "  addi $sp, $sp, -4\n");
-					fprintf(f, "  sw %s, 0($sp)\n", regs[reg]->name);
-					
+					fprintf(f, "  sw %s, 0($sp)\n", regs[reg]->name);	
 				}
 				regs[reg]->status = AVAILABLE;
 
@@ -822,7 +822,7 @@ void writeToFile(FILE *f) {
 			printf("\n");*/
 #endif
 		}
-		else if(ic->kind == DECI) {
+		else if(ic->kind == DECI && ic->status == LIVE) {
 #ifdef INTER
 			printf("DEC ");
 			fprintf(f, "DEC ");
@@ -830,6 +830,7 @@ void writeToFile(FILE *f) {
 			printf(" %d\n", ic->u.dec.size);
 			fprintf(f, " %d\n", ic->u.dec.size);
 #else
+			//printf("%d\n", ic->status);
 			fprintf(f, "  addi $sp, $sp, -%d\n", ic->u.dec.size);
 			stackAddress += ic->u.dec.size;
 			ic->u.dec.op->u.symbol->stackIndex = stackAddress;
@@ -866,10 +867,10 @@ void writeToFile(FILE *f) {
 				fprintf(f, "  sw %s, 0($sp)\n", args[arg]->name);
 			}
 			else {
-				int offpa = stackAddress - 20;
+				int offpa = argCount + 1 - (stackAddress - 20) / 4;
 				Operand op = GenerateOperandTemp("_temp_");
 				int regtemp = getReg(op, f);
-				fprintf(f, "  lw %s, %d($fp)\n", regs[regtemp]->name, 44 + offpa);
+				fprintf(f, "  lw %s, %d($fp)\n", regs[regtemp]->name, 44 + offpa * 4);
 				fprintf(f, "  sw %s, 0($sp)\n", regs[regtemp]->name);
 				regs[regtemp]->status = AVAILABLE;
 			}
@@ -887,15 +888,43 @@ void writeToFile(FILE *f) {
 			fprintf(f, "\n%s:\n", ic->u.value->u.func->name);
 #endif
 		}
-		/*else if(ic->kind == DIVIDE) {
+		else if(ic->kind == DIVIDE) {
 #ifdef INTER
 			printf("DIVIDE\n");
 #else
-			//printf("stack goto 0\n");
-			fprintf(f, "  addi $sp, $sp, %d\n", stackAddress);
-			stackAddress = 0;
+			//printf("WHILE\n");
+			InterCodes ics = out;
+			int wcount = 0;
+			while(ics != NULL && wcount <= 6) {
+				//printf("wcount:%d\n",wcount);
+				//printf("%d\n",ics->code->kind);
+				ics = ics->next;
+				wcount++;
+			}
+			//if(ics != NULL)
+			//	printf("%d\n",ics->code->kind);
+			while(ics != NULL && ics->code->kind == DECI) {
+#ifdef INTER
+				printf("DEC ");
+				fprintf(f, "DEC ");
+				writeOperand(ics->code->u.dec.op, f);
+				printf(" %d\n", ics->code->u.dec.size);
+				fprintf(f, " %d\n", ics->code->u.dec.size);
+#else
+				//printf("www\n");
+				ics->code->status = DEAD;
+				//printf("%d\n",out->next->next->next->next->next->next->next->code->status);
+				fprintf(f, "  addi $sp, $sp, -%d\n", ics->code->u.dec.size);
+				stackAddress += ics->code->u.dec.size;
+				ics->code->u.dec.op->u.symbol->stackIndex = stackAddress;
+				//printf("DEC:stackAddress:%d\n", stackAddress);
 #endif
-		}*/
+				ics = ics->next;
+			}
+			//fprintf(f, "  addi $sp, $sp, %d\n", stackAddress);
+			//stackAddress = 0;
+#endif
+		}
 		else if(ic->kind == ARGCLEAR) {
 #ifdef INTER
 			printf("ARGCLEAR\n");
@@ -973,16 +1002,20 @@ InterCodes translate_Stmt(Node node) {
 					InterCode ic2 = GenerateInterCodeReturnOrLabel(LABEL, op2);
 					InterCode ic3 = GenerateInterCodeReturnOrLabel(LABEL, op3);
 					InterCode ic4 = GenerateInterCodeReturnOrLabel(GOTO, op1);
+					InterCode icd = GenerateInterCodeDivide();
 					InterCodes code11 = singleCode(ic1);
 					InterCodes code12 = singleCode(ic4);
 					InterCodes code22 = singleCode(ic2);
 					InterCodes code33 = singleCode(ic3);
+					InterCodes coded = singleCode(icd);
+
 					codeAdd(code11, code1);
 					codeAdd(code11, code22);
 					codeAdd(code11, code2);
 					codeAdd(code11, code12);
 					codeAdd(code11, code33);
-					return code11;
+					codeAdd(coded, code11);					
+					return coded;
 				}	
 			}
 		case 7: {
